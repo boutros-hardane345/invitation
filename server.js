@@ -29,7 +29,9 @@ function normalizeText(value) {
 
 async function getCollection() {
   if (!MONGODB_URI) {
-    throw new Error('Missing MONGODB_URI env var');
+    const err = new Error('Missing MONGODB_URI env var');
+    err.code = 'MISSING_MONGODB_URI';
+    throw err;
   }
   if (mongoCollection) return mongoCollection;
 
@@ -152,6 +154,17 @@ app.post('/api/rsvp', async (req, res) => {
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error(err);
+
+    if (err && err.code === 'MISSING_MONGODB_URI') {
+      return res.status(500).json({ ok: false, error: 'Server not configured (missing database connection).' });
+    }
+
+    // Common Atlas connection failures (network allowlist, bad credentials, etc.)
+    const msg = String(err && err.message ? err.message : '');
+    if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|MongoNetworkError/i.test(msg)) {
+      return res.status(500).json({ ok: false, error: 'Database connection failed. Please try again later.' });
+    }
+
     return res.status(500).json({ ok: false, error: 'Server error. Please try again.' });
   }
 });
