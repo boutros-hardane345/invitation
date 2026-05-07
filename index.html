@@ -773,6 +773,17 @@ function showToast(msg){
     return false;
   }
 
+  function enforceHostedUi(){
+    if(location.protocol === 'file:'){
+      setDisabledAll(true);
+      deadlineDiv.style.display='none';
+      resetMessages();
+      showError('RSVP form is unavailable when opened as a local file. Please open the website link (https) or run the local server (http://localhost:3000).');
+      return true;
+    }
+    return false;
+  }
+
   form.addEventListener('change', (e)=>{
     if(e.target && e.target.name === 'status') onStatusChange();
   });
@@ -837,8 +848,10 @@ function showToast(msg){
   });
 
   // Initial state
-  enforceDeadlineUi();
-  onStatusChange();
+  if(!enforceHostedUi()){
+    enforceDeadlineUi();
+    onStatusChange();
+  }
 })();
 
 
