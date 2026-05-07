@@ -292,6 +292,53 @@
 
     .deadline-warning{background:#2a1e1a;border-left:6px solid #c0392b;padding:0.8rem;border-radius:16px;margin-top:1rem;font-size:0.85rem;color:#f0b27a;}
     .success-message{background:#1e2a1a;border-left:6px solid var(--gold);padding:0.8rem;border-radius:16px;margin-top:1rem;display:none;color:#e0c87c;animation:fadeSlideIn 0.5s ease;}
+    .error-message{background:#2a1f1f;border-left:6px solid #c0392b;padding:0.8rem;border-radius:16px;margin-top:1rem;display:none;color:#f0b27a;animation:fadeSlideIn 0.5s ease;}
+
+    .rsvp-form{position:relative;z-index:1;display:grid;gap:0.8rem;max-width:520px;margin:0.9rem auto 0;}
+    .rsvp-row{display:grid;gap:0.5rem;}
+    .rsvp-row label{font-size:0.8rem;letter-spacing:1px;color:var(--gold);text-transform:uppercase;text-align:left;}
+    .rsvp-input, .rsvp-select, .rsvp-textarea{
+      width:100%;
+      background:#000;
+      border:1px solid rgba(212,175,55,0.55);
+      color:#fff;
+      padding:12px 14px;
+      border-radius:14px;
+      outline:none;
+      font-family:'Montserrat',sans-serif;
+      font-size:0.95rem;
+      transition:border-color 0.2s, box-shadow 0.2s;
+    }
+    .rsvp-textarea{min-height:90px;resize:vertical;}
+    .rsvp-input:focus, .rsvp-select:focus, .rsvp-textarea:focus{border-color:var(--gold2);box-shadow:0 0 0 3px rgba(212,175,55,0.12);}
+    .rsvp-radio-group{display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap;}
+    .rsvp-radio{
+      display:flex;align-items:center;gap:0.5rem;
+      background:#000;border:1px solid rgba(212,175,55,0.55);
+      padding:10px 12px;border-radius:999px;cursor:pointer;
+      user-select:none;
+    }
+    .rsvp-radio input{accent-color:var(--gold2);}
+    .rsvp-guest-list{display:grid;gap:0.55rem;}
+    .rsvp-help{font-size:0.78rem;color:#d7c48b;opacity:0.9;text-align:left;line-height:1.5;}
+    .btn-secondary{
+      background:transparent;
+      border:1px solid rgba(212,175,55,0.75);
+      color:var(--gold2);
+      font-family:'Montserrat',sans-serif;
+      font-size:0.95rem;
+      font-weight:700;
+      padding:12px 20px;
+      border-radius:50px;
+      cursor:pointer;
+      width:100%;max-width:280px;
+      margin:0.6rem auto 0;display:block;
+      letter-spacing:1px;text-decoration:none;line-height:1.5;
+      transition:transform 0.15s, box-shadow 0.15s, background 0.15s;
+      position:relative;z-index:1;
+    }
+    .btn-secondary:hover{transform:scale(1.03);box-shadow:0 0 24px rgba(212,175,55,0.28);background:rgba(212,175,55,0.06);}
+    .btn-secondary[aria-disabled="true"]{opacity:0.6;pointer-events:none;}
     @keyframes fadeSlideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
     footer{background:#050505;color:#b89a3a;text-align:center;padding:1rem;font-size:0.7rem;font-weight:300;border-top:1px solid var(--gold);}
@@ -400,12 +447,52 @@
     <!-- RSVP -->
     <div class="rsvp-box scroll-reveal">
       <strong>RSVP required</strong><br>
-      Text me on WhatsApp to confirm your attendance.<br>
-      Location pin and all details will be sent to you there.
-      <div style="margin:1rem 0 0.5rem;">
-        <div id="groupButtonContainer"></div>
-      </div>
-      <div id="rsvpMessage" class="success-message">✅ See you on 18 June in Ehmej! 🎓</div>
+      Please confirm your attendance below.
+
+      <form id="rsvpForm" class="rsvp-form" autocomplete="on" novalidate>
+        <input type="text" id="hpField" name="hp" tabindex="-1" autocomplete="off" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+
+        <div class="rsvp-row">
+          <label>Attendance</label>
+          <div class="rsvp-radio-group">
+            <label class="rsvp-radio"><input type="radio" name="status" value="yes"> Coming</label>
+            <label class="rsvp-radio"><input type="radio" name="status" value="no"> Not coming</label>
+          </div>
+        </div>
+
+        <div class="rsvp-row">
+          <label for="inviterName">Your name</label>
+          <input class="rsvp-input" id="inviterName" name="inviterName" type="text" placeholder="Full name" required>
+        </div>
+
+        <div class="rsvp-row">
+          <label for="inviterPhone">Phone</label>
+          <input class="rsvp-input" id="inviterPhone" name="inviterPhone" type="text" placeholder="Phone number" required>
+          <div class="rsvp-help">Spaces are ignored (for example: "81 239 091" becomes "81239091").</div>
+        </div>
+
+        <div class="rsvp-row">
+          <label for="partySize">Number of persons (includes you)</label>
+          <input class="rsvp-input" id="partySize" name="partySize" type="number" inputmode="numeric" min="1" step="1" value="1" disabled>
+        </div>
+
+        <div class="rsvp-row" id="guestNamesRow" style="display:none;">
+          <label>Guest name(s)</label>
+          <div id="guestNames" class="rsvp-guest-list"></div>
+        </div>
+
+        <div class="rsvp-row">
+          <label for="dietNote">Diet note (optional)</label>
+          <textarea class="rsvp-textarea" id="dietNote" name="dietNote" placeholder="Allergies, dietary restrictions, etc."></textarea>
+        </div>
+
+        <button id="rsvpSubmit" class="btn-join" type="submit">Submit RSVP</button>
+
+        <a id="joinGroupBtn" class="btn-secondary" href="https://chat.whatsapp.com/KzUVoeTAuCgCxOpV3a6MCr" target="_blank" rel="noopener noreferrer" style="display:none;">Join WhatsApp group</a>
+      </form>
+
+      <div id="rsvpMessage" class="success-message"></div>
+      <div id="rsvpError" class="error-message"></div>
       <div id="deadlineMessage" class="deadline-warning" style="display:none;">⛔ The RSVP deadline (15 June 2026) has passed. We'll miss you!</div>
       <div class="deadline-note">Deadline to RSVP: <strong>15 June 2026</strong>.</div>
     </div>
@@ -432,8 +519,8 @@
 </div>
 
 <script>
-const WHATSAPP_LINK = "https://wa.me/96181239091";
-const RSVP_DEADLINE = new Date(2026,5,15,23,59,59);
+const RSVP_DEADLINE_ISO = "2026-06-15T23:59:59+03:00";
+const RSVP_DEADLINE = new Date(RSVP_DEADLINE_ISO);
 const EVENT_DATE    = new Date(2026,5,18,10,0,0);
 const GOLD          = ['#d4af37','#f5d742','#b8860b','#ffffff','#e5c87b','#fffacd'];
 
@@ -593,29 +680,166 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-// ── RSVP BUTTON ──────────────────────────────────────
-function renderButton(){
-  const container  = document.getElementById('groupButtonContainer');
-  const deadlineDiv= document.getElementById('deadlineMessage');
-  const successDiv = document.getElementById('rsvpMessage');
-  if(isAfterDeadline()){
-    container.innerHTML=`<button class="btn-join btn-disabled" disabled>🔒 RSVP closed (deadline passed)</button>`;
-    deadlineDiv.style.display='block'; successDiv.style.display='none'; return;
+// ── RSVP FORM (MongoDB-backed via API) ────────────────
+(function initRsvpForm(){
+  const form = document.getElementById('rsvpForm');
+  const deadlineDiv = document.getElementById('deadlineMessage');
+  const msgDiv = document.getElementById('rsvpMessage');
+  const errDiv = document.getElementById('rsvpError');
+  const joinBtn = document.getElementById('joinGroupBtn');
+  const partySizeEl = document.getElementById('partySize');
+  const guestRow = document.getElementById('guestNamesRow');
+  const guestWrap = document.getElementById('guestNames');
+  const submitBtn = document.getElementById('rsvpSubmit');
+
+  function resetMessages(){
+    msgDiv.style.display='none'; msgDiv.textContent='';
+    errDiv.style.display='none'; errDiv.textContent='';
   }
-  const btn=document.createElement('a');
-  btn.className='btn-join'; btn.href=WHATSAPP_LINK;
-  btn.target='_blank'; btn.rel='noopener noreferrer';
-  btn.innerText='✨ Reserve your spot';
-  btn.onclick=()=>{
-    successDiv.style.display='block';
-    confetti({particleCount:200,spread:130,origin:{x:0.5,y:0.7},colors:GOLD,startVelocity:45,ticks:400});
-    setTimeout(()=>confetti({particleCount:100,spread:360,origin:{x:0.5,y:0.5},colors:GOLD,startVelocity:20,gravity:0.3,ticks:500}),400);
-    showToast('🥂 See you in Ehmej! 🎓');
-  };
-  container.innerHTML=''; container.appendChild(btn);
-  deadlineDiv.style.display='none';
-}
-renderButton();
+  function showError(message){
+    errDiv.textContent = message;
+    errDiv.style.display='block';
+  }
+  function showSuccess(message){
+    msgDiv.textContent = message;
+    msgDiv.style.display='block';
+  }
+
+  function normalizePhone(s){
+    return String(s || '').trim().replace(/\s+/g,'');
+  }
+
+  function setDisabledAll(disabled){
+    Array.from(form.elements).forEach(el=>{ el.disabled = disabled; });
+    if(disabled){
+      joinBtn.style.display='none';
+      joinBtn.setAttribute('aria-disabled','true');
+      submitBtn.classList.add('btn-disabled');
+    } else {
+      joinBtn.removeAttribute('aria-disabled');
+      submitBtn.classList.remove('btn-disabled');
+    }
+  }
+
+  function getStatus(){
+    const checked = form.querySelector('input[name="status"]:checked');
+    return checked ? checked.value : '';
+  }
+
+  function renderGuestInputs(){
+    const status = getStatus();
+    const partySize = parseInt(String(partySizeEl.value || '1'), 10);
+    guestWrap.innerHTML = '';
+    guestRow.style.display = 'none';
+    if(status !== 'yes') return;
+    if(!Number.isFinite(partySize) || partySize <= 1) return;
+    guestRow.style.display = '';
+    const count = partySize - 1;
+    for(let i=0;i<count;i++){
+      const input = document.createElement('input');
+      input.className = 'rsvp-input';
+      input.type = 'text';
+      input.placeholder = `Guest ${i+1} name`;
+      input.required = true;
+      input.dataset.guest = '1';
+      guestWrap.appendChild(input);
+    }
+  }
+
+  function onStatusChange(){
+    resetMessages();
+    joinBtn.style.display='none';
+
+    const status = getStatus();
+    if(status === 'yes'){
+      partySizeEl.disabled = false;
+      if(!partySizeEl.value) partySizeEl.value = '1';
+    } else {
+      partySizeEl.disabled = true;
+      partySizeEl.value = '1';
+    }
+    renderGuestInputs();
+  }
+
+  function enforceDeadlineUi(){
+    if(isAfterDeadline()){
+      setDisabledAll(true);
+      deadlineDiv.style.display='block';
+      resetMessages();
+      showError('RSVP unavailable (deadline passed).');
+      return true;
+    }
+    deadlineDiv.style.display='none';
+    return false;
+  }
+
+  form.addEventListener('change', (e)=>{
+    if(e.target && e.target.name === 'status') onStatusChange();
+  });
+  partySizeEl.addEventListener('input', ()=>{ resetMessages(); joinBtn.style.display='none'; renderGuestInputs(); });
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    resetMessages();
+    joinBtn.style.display='none';
+
+    if(enforceDeadlineUi()) return;
+
+    const status = getStatus();
+    const inviterName = String(form.inviterName.value || '').trim();
+    const inviterPhone = normalizePhone(form.inviterPhone.value);
+    const dietNote = String(form.dietNote.value || '').trim();
+    const hp = String(form.hp?.value || '').trim();
+    const partySize = status === 'yes' ? parseInt(String(partySizeEl.value || '1'), 10) : 0;
+
+    const guestNames = Array.from(guestWrap.querySelectorAll('input[data-guest]'))
+      .map(i => String(i.value || '').trim())
+      .filter(Boolean);
+
+    if(status !== 'yes' && status !== 'no') return showError('Please select Coming or Not coming.');
+    if(!inviterName) return showError('Please enter your name.');
+    if(!inviterPhone) return showError('Please enter your phone.');
+    if(status === 'yes'){
+      if(!Number.isFinite(partySize) || partySize < 1) return showError('Party size must be at least 1.');
+      if(partySize > 1 && guestNames.length !== partySize - 1) return showError(`Please enter exactly ${partySize - 1} guest name(s).`);
+      if(partySize === 1 && guestNames.length !== 0) return showError('Guest names must be empty when party size is 1.');
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.classList.add('btn-disabled');
+    try{
+      const resp = await fetch('/api/rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, inviterName, inviterPhone, partySize, guestNames, dietNote, hp })
+      });
+      const data = await resp.json().catch(()=>({ ok:false, error:'Invalid server response.' }));
+      if(!resp.ok || !data.ok){
+        return showError(data && data.error ? data.error : 'Submission failed. Please try again.');
+      }
+
+      if(status === 'yes'){
+        showSuccess('✅ RSVP saved. See you on 18 June in Ehmej!');
+        joinBtn.style.display = 'block';
+        confetti({particleCount:200,spread:130,origin:{x:0.5,y:0.7},colors:GOLD,startVelocity:45,ticks:400});
+        setTimeout(()=>confetti({particleCount:100,spread:360,origin:{x:0.5,y:0.5},colors:GOLD,startVelocity:20,gravity:0.3,ticks:500}),400);
+        showToast('🥂 See you in Ehmej! 🎓');
+      } else {
+        showSuccess("✅ Thanks for letting me know. We'll miss you!");
+        showToast("Thanks for the update");
+      }
+    } catch(_err){
+      showError('Network error. Please try again.');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('btn-disabled');
+    }
+  });
+
+  // Initial state
+  enforceDeadlineUi();
+  onStatusChange();
+})();
 
 
 
