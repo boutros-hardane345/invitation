@@ -142,22 +142,21 @@
     .hero .friends-style {
       font-family:'Permanent Marker',cursive;
       font-size:1.8rem; letter-spacing:2px; color:#fff;
-      display:inline-block; overflow:hidden; white-space:nowrap;
-      border-right:3px solid var(--gold);
-      width:0;
-      animation: typewriter1 1.8s steps(26) 0.5s forwards, blinkCursor 0.7s step-end infinite;
+      display:inline-block; white-space:nowrap;
+      /* Typewriter effect removed to avoid invisible text on some devices */
+      border-right:none;
+      width:auto;
+      animation:none;
     }
     .hero .friends-style-small {
       font-family:'Permanent Marker',cursive;
       font-size:1.4rem; letter-spacing:2px; color:#fff;
-      overflow:hidden; white-space:nowrap;
-      border-right:3px solid var(--gold);
-      width:0;
-      animation: typewriter2 1.6s steps(28) 2.5s forwards, blinkCursor 0.7s step-end 2.5s infinite;
+      white-space:nowrap;
+      border-right:none;
+      width:auto;
+      animation:none;
     }
-    @keyframes typewriter1{to{width:100%}}
-    @keyframes typewriter2{to{width:100%}}
-    @keyframes blinkCursor{0%,100%{border-color:var(--gold)}50%{border-color:transparent}}
+    /* (typewriter + cursor blink removed) */
 
     .content{padding:1.8rem 1.5rem;}
 
@@ -194,7 +193,7 @@
       opacity:0.04;pointer-events:none;
     }
     .countdown-card h3{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--gold);margin:0.3rem 0;}
-    .live-timer{display:flex;justify-content:center;gap:0.8rem;margin:0.8rem 0 0.4rem;flex-wrap:wrap;}
+    .live-timer{display:flex;justify-content:center;gap:0.8rem;margin:0.8rem 0 0.4rem;flex-wrap:nowrap;}
     .timer-unit{
       background:#000;border:1px solid var(--gold);
       border-radius:12px;padding:0.4rem 0.8rem;
@@ -374,7 +373,9 @@
       .hero-photo,.photo-wrap{width:80px;height:80px;}
       .hero .friends-style{font-size:1.3rem;}
       .hero .friends-style-small{font-size:1.1rem;}
-      .t-num{font-size:1.6rem;}
+      .live-timer{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;}
+      .timer-unit{min-width:0;padding:0.35rem 0.5rem;}
+      .t-num{font-size:1.45rem;letter-spacing:1px;}
       .info-card h2{font-size:1.4rem;}
       .info-line{font-size:0.85rem;}
       .btn-join{font-size:0.9rem;padding:10px 16px;}
