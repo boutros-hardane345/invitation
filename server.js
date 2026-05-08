@@ -311,35 +311,50 @@ app.get('/admin', requireAdminPage, (req, res) => {
     <title>RSVP Admin</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
     <style>
-      :root{--bg:#0a0a0a;--card:#111;--gold:#d4af37;--gold2:#f5d742;--muted:#bdbdbd;--danger:#c0392b;}
+      :root{--bg:#0a0a0a;--card:#111;--card2:#0c0c0c;--gold:#d4af37;--gold2:#f5d742;--muted:#bdbdbd;--danger:#c0392b;}
       *{box-sizing:border-box;}
       body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:#fff;padding:16px;}
       .wrap{max-width:1100px;margin:0 auto;}
-      .top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:14px;}
-      .title{font-weight:800;letter-spacing:0.5px;color:var(--gold2);}
+      .top{position:sticky;top:0;z-index:50;background:linear-gradient(180deg, rgba(10,10,10,0.98), rgba(10,10,10,0.82));backdrop-filter:blur(10px);padding:10px 0 12px;margin-bottom:12px;border-bottom:1px solid rgba(212,175,55,0.12);}
+      .top-inner{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
+      .title{font-weight:900;letter-spacing:0.6px;color:var(--gold2);}
       .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-      .btn{border:1px solid rgba(212,175,55,0.65);background:#000;color:var(--gold2);padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:700;}
+      .btn{border:1px solid rgba(212,175,55,0.65);background:#000;color:var(--gold2);padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:800;}
       .btn:hover{border-color:var(--gold2);}
+      .btn:disabled{opacity:0.55;cursor:not-allowed;}
       .btn-danger{border-color:rgba(192,57,43,0.7);color:#ffb4a9;}
       .btn-danger:hover{border-color:#ffb4a9;}
       .input, .select{border:1px solid rgba(212,175,55,0.35);background:#000;color:#fff;padding:10px 12px;border-radius:10px;min-width:220px;}
       .select{min-width:160px;}
+      .input:focus,.select:focus,.btn:focus{outline:2px solid rgba(245,215,66,0.35);outline-offset:2px;}
       .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0;}
       @media(max-width:800px){.cards{grid-template-columns:1fr;}}
-      .card{background:var(--card);border:1px solid rgba(212,175,55,0.25);border-radius:14px;padding:12px;}
+      .card{background:var(--card);border:1px solid rgba(212,175,55,0.25);border-radius:14px;padding:12px;cursor:pointer;}
+      .card:hover{border-color:rgba(245,215,66,0.45);}
       .label{color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;}
       .value{font-size:26px;font-weight:900;color:var(--gold2);margin-top:6px;}
       .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
       .toggle{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px;}
       table{width:100%;border-collapse:collapse;margin-top:12px;background:var(--card);border:1px solid rgba(212,175,55,0.2);border-radius:14px;overflow:hidden;}
+      thead th{position:sticky;top:64px;z-index:5;}
       th,td{padding:10px 10px;border-bottom:1px solid rgba(255,255,255,0.06);vertical-align:top;text-align:left;font-size:13px;}
-      th{color:var(--gold);font-size:12px;letter-spacing:1px;text-transform:uppercase;background:#0c0c0c;}
-      tr:hover td{background:#0c0c0c;}
+      th{color:var(--gold);font-size:12px;letter-spacing:1px;text-transform:uppercase;background:var(--card2);}
+      tbody tr:nth-child(2n) td{background:rgba(255,255,255,0.015);}
+      tr:hover td{background:rgba(255,255,255,0.03);}
       .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid rgba(212,175,55,0.35);color:var(--gold2);font-weight:800;font-size:12px;}
       .pill.no{border-color:rgba(192,57,43,0.5);color:#ffb4a9;}
       .muted{color:var(--muted);}
       .small{font-size:12px;line-height:1.4;color:var(--muted);}
       .err{display:none;margin-top:12px;background:#1b0f0f;border:1px solid rgba(192,57,43,0.6);color:#ffb4a9;border-radius:14px;padding:10px;}
+      .hint{color:var(--muted);font-size:12px;}
+      .pager{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:12px;}
+      .pager .left{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+      .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid rgba(212,175,55,0.2);background:rgba(0,0,0,0.35);color:#fff;}
+      .link{background:transparent;border:0;color:var(--gold2);cursor:pointer;font-weight:800;padding:0;}
+      .link:hover{text-decoration:underline;}
+
+      #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(120%);background:#000;border:1px solid rgba(212,175,55,0.55);color:var(--gold2);padding:10px 14px;border-radius:999px;font-weight:800;font-size:13px;letter-spacing:0.2px;transition:transform 0.25s;z-index:9999;}
+      #toast.show{transform:translateX(-50%) translateY(0);}
 
       /* Mobile cards */
       #cards{display:none; margin-top:12px;}
@@ -351,21 +366,24 @@ app.get('/admin', requireAdminPage, (req, res) => {
 
       @media(max-width:720px){
         body{padding:12px;}
-        .top{gap:10px;}
+        thead th{top:112px;}
         .bar{width:100%;}
         .input{min-width:0;width:100%;}
         .select{min-width:0;}
         table{display:none;}
         #cards{display:grid;gap:10px;}
         .cards{grid-template-columns:1fr;}
+        .rsvp-card .grid{grid-template-columns:1fr;}
+        .rsvp-card .actions .btn{width:100%;}
       }
     </style>
   </head>
   <body>
     <div class="wrap">
       <div class="top">
-        <div class="title">RSVP Dashboard</div>
-        <div class="bar">
+        <div class="top-inner">
+          <div class="title">RSVP Dashboard</div>
+          <div class="bar">
           <select id="status" class="select">
             <option value="yes" selected>Coming</option>
             <option value="no">Declined</option>
@@ -375,15 +393,16 @@ app.get('/admin', requireAdminPage, (req, res) => {
           <label class="toggle"><input id="showDeleted" type="checkbox" /> Show deleted</label>
           <button id="refresh" class="btn">Refresh</button>
           <button id="logout" class="btn btn-danger">Logout</button>
+          </div>
         </div>
       </div>
 
       <div id="err" class="err"></div>
 
       <div class="cards">
-        <div class="card"><div class="label">Coming</div><div class="value" id="cYes">-</div></div>
-        <div class="card"><div class="label">Declined</div><div class="value" id="cNo">-</div></div>
-        <div class="card"><div class="label">Total Persons (Coming)</div><div class="value" id="cTotal">-</div></div>
+        <div class="card" id="cardYes"><div class="label">Coming</div><div class="value" id="cYes">-</div><div class="hint">Tap to filter</div></div>
+        <div class="card" id="cardNo"><div class="label">Declined</div><div class="value" id="cNo">-</div><div class="hint">Tap to filter</div></div>
+        <div class="card" id="cardAll"><div class="label">Total Persons (Coming)</div><div class="value" id="cTotal">-</div><div class="hint">Tap for all</div></div>
       </div>
 
       <table>
@@ -401,7 +420,19 @@ app.get('/admin', requireAdminPage, (req, res) => {
       </table>
 
       <div id="cards"></div>
+
+      <div class="pager">
+        <div class="left">
+          <button id="prev" class="btn">Prev</button>
+          <button id="next" class="btn">Next</button>
+          <span class="chip" id="range">0-0</span>
+          <span class="chip" id="total">Total: 0</span>
+        </div>
+        <span class="hint">Tip: click a phone number to copy.</span>
+      </div>
     </div>
+
+    <div id="toast">Copied</div>
 
     <script>
       (function(){
@@ -413,6 +444,16 @@ app.get('/admin', requireAdminPage, (req, res) => {
         const showDeleted = document.getElementById('showDeleted');
         const tbody = document.getElementById('tbody');
         const cards = document.getElementById('cards');
+        const prevBtn = document.getElementById('prev');
+        const nextBtn = document.getElementById('next');
+        const rangeEl = document.getElementById('range');
+        const totalEl = document.getElementById('total');
+        const toast = document.getElementById('toast');
+        const cardYes = document.getElementById('cardYes');
+        const cardNo = document.getElementById('cardNo');
+        const cardAll = document.getElementById('cardAll');
+
+        const state = { skip: 0, limit: 50, total: 0, loading: false, qTimer: null };
 
         const GOLD = ['#d4af37','#f5d742','#b8860b','#ffffff','#e5c87b','#fffacd'];
         function canConfetti(){
@@ -426,6 +467,36 @@ app.get('/admin', requireAdminPage, (req, res) => {
         function setErr(msg){
           errEl.textContent = msg || '';
           errEl.style.display = msg ? 'block' : 'none';
+        }
+
+        function showToast(msg){
+          if(!toast) return;
+          toast.textContent = msg;
+          toast.classList.add('show');
+          setTimeout(()=>toast.classList.remove('show'), 1600);
+        }
+
+        function setLoading(on){
+          state.loading = on;
+          [refresh, logout, statusSel, qEl, showDeleted, prevBtn, nextBtn].forEach(el=>{ if(el) el.disabled = on; });
+        }
+
+        async function copyText(text){
+          const t = String(text || '');
+          if(!t) return;
+          try{
+            await navigator.clipboard.writeText(t);
+          } catch {
+            const ta = document.createElement('textarea');
+            ta.value = t;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+          }
+          showToast('Copied phone');
         }
 
         async function api(path){
@@ -451,13 +522,16 @@ app.get('/admin', requireAdminPage, (req, res) => {
           const guests = Array.isArray(r.guestNames) && r.guestNames.length ? r.guestNames.join(', ') : '';
           const isDel = r.deleted === true;
           tr.innerHTML = [
-            '<td>' + escapeHtml(r.inviterName || '') + (isDel ? ' <span class="muted">(deleted)</span>' : '') + '</td>',
-            '<td>' + escapeHtml(r.inviterPhone || '') + '</td>',
+            '<td><strong>' + escapeHtml(r.inviterName || '') + '</strong>' + (isDel ? ' <span class="muted">(deleted)</span>' : '') + '</td>',
+            '<td><button class="link" type="button" data-phone="' + escapeHtml(r.inviterPhone || '') + '">' + escapeHtml(r.inviterPhone || '') + '</button></td>',
             '<td>' + (r.status === 'yes' ? '<span class="pill">yes</span>' : '<span class="pill no">no</span>') + '</td>',
             '<td>' + (r.status === 'yes' ? String(r.partySize || 0) : '-') + '</td>',
             '<td class="small">' + escapeHtml(guests) + '</td>',
             '<td></td>'
           ].join('');
+
+          const phoneBtn = tr.querySelector('button[data-phone]');
+          phoneBtn && (phoneBtn.onclick = ()=>copyText(r.inviterPhone));
           const actionTd = tr.lastElementChild;
           if(isDel){
             const b = document.createElement('button');
@@ -497,11 +571,14 @@ app.get('/admin', requireAdminPage, (req, res) => {
           const grid = document.createElement('div');
           grid.className = 'grid';
           grid.innerHTML = [
-            '<div><div class="k">Phone</div><div class="v">' + escapeHtml(r.inviterPhone || '') + '</div></div>',
+            '<div><div class="k">Phone</div><div class="v"><button class="link" type="button">' + escapeHtml(r.inviterPhone || '') + '</button></div></div>',
             '<div><div class="k">Status</div><div class="v">' + (r.status === 'yes' ? '<span class="pill">yes</span>' : '<span class="pill no">no</span>') + '</div></div>',
             '<div><div class="k">Party</div><div class="v">' + (r.status === 'yes' ? String(r.partySize || 0) : '-') + '</div></div>',
             '<div><div class="k">Guests</div><div class="v small">' + escapeHtml(guests) + '</div></div>'
           ].join('');
+
+          const phoneBtn = grid.querySelector('button.link');
+          phoneBtn && (phoneBtn.onclick = ()=>copyText(r.inviterPhone));
 
           const actions = document.createElement('div');
           actions.className = 'actions';
@@ -555,25 +632,37 @@ app.get('/admin', requireAdminPage, (req, res) => {
           url.searchParams.set('includeDeleted', String(inc));
           url.searchParams.set('status', st);
           if(q) url.searchParams.set('q', q);
-          url.searchParams.set('limit', '200');
+          url.searchParams.set('limit', String(state.limit));
+          url.searchParams.set('skip', String(state.skip));
 
           const data = await api(url.toString());
           tbody.innerHTML = '';
           cards.innerHTML = '';
+          state.total = data.total || 0;
           for(const r of data.items){
             tbody.appendChild(renderRow(r));
             cards.appendChild(renderCard(r));
           }
+
+          const from = state.total === 0 ? 0 : state.skip + 1;
+          const to = Math.min(state.skip + state.limit, state.total);
+          rangeEl.textContent = from + '-' + to;
+          totalEl.textContent = 'Total: ' + state.total;
+          prevBtn.disabled = state.loading || state.skip <= 0;
+          nextBtn.disabled = state.loading || (state.skip + state.limit) >= state.total;
         }
 
         async function loadAll(){
           setErr('');
+          setLoading(true);
           try{
             await loadStats();
             await loadList();
             if(!window.__didBurst){ window.__didBurst = true; burst(90); }
           } catch(e){
             setErr(e.message || 'Failed to load');
+          } finally {
+            setLoading(false);
           }
         }
 
@@ -581,10 +670,21 @@ app.get('/admin', requireAdminPage, (req, res) => {
           // Use a POST logout to clear cookie.
           fetch('/admin/logout', { method: 'POST' }).finally(()=>{ location.href = '/admin/login'; });
         });
-        refresh.addEventListener('click', loadAll);
-        statusSel.addEventListener('change', loadAll);
-        showDeleted.addEventListener('change', loadAll);
-        qEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') loadAll(); });
+        refresh.addEventListener('click', ()=>{ state.skip = 0; loadAll(); });
+        statusSel.addEventListener('change', ()=>{ state.skip = 0; loadAll(); });
+        showDeleted.addEventListener('change', ()=>{ state.skip = 0; loadAll(); });
+        qEl.addEventListener('input', ()=>{
+          clearTimeout(state.qTimer);
+          state.qTimer = setTimeout(()=>{ state.skip = 0; loadAll(); }, 280);
+        });
+        qEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ state.skip = 0; loadAll(); } });
+
+        prevBtn.addEventListener('click', ()=>{ state.skip = Math.max(0, state.skip - state.limit); loadAll(); });
+        nextBtn.addEventListener('click', ()=>{ state.skip = state.skip + state.limit; loadAll(); });
+
+        cardYes.addEventListener('click', ()=>{ statusSel.value = 'yes'; state.skip = 0; loadAll(); });
+        cardNo.addEventListener('click', ()=>{ statusSel.value = 'no'; state.skip = 0; loadAll(); });
+        cardAll.addEventListener('click', ()=>{ statusSel.value = 'all'; state.skip = 0; loadAll(); });
 
         loadAll();
       })();
@@ -644,24 +744,27 @@ app.get('/api/admin/rsvps', requireAdminApi, async (req, res) => {
     }
 
     const collection = await getCollection();
-    const items = await collection
-      .find(filter, {
-        projection: {
-          _id: 0,
-          inviterName: 1,
-          inviterPhone: 1,
-          status: 1,
-          partySize: 1,
-          guestNames: 1,
-          deleted: 1
-        }
-      })
-      .sort({ updatedAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+    const [items, total] = await Promise.all([
+      collection
+        .find(filter, {
+          projection: {
+            _id: 0,
+            inviterName: 1,
+            inviterPhone: 1,
+            status: 1,
+            partySize: 1,
+            guestNames: 1,
+            deleted: 1
+          }
+        })
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray(),
+      collection.countDocuments(filter)
+    ]);
 
-    res.status(200).json({ ok: true, items, limit, skip });
+    res.status(200).json({ ok: true, items, total, limit, skip });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error(err);
