@@ -10,7 +10,8 @@ const RSVP_DEADLINE = new Date(RSVP_DEADLINE_ISO);
 const MONGODB_URI = process.env.MONGODB_URI;
 const MONGODB_DB = process.env.MONGODB_DB || 'graduation';
 const MONGODB_COLLECTION = process.env.MONGODB_COLLECTION || 'rsvps';
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
+const ADMIN_USER = process.env.ADMIN_USER || '';
+const ADMIN_PASS = process.env.ADMIN_PASS || '';
 
 let mongoClient;
 let mongoCollection;
@@ -28,25 +29,38 @@ function normalizeText(value) {
   return String(value || '').trim();
 }
 
-function getAdminToken(req) {
-  const q = normalizeText(req.query && req.query.token);
-  if (q) return q;
-  const auth = normalizeText(req.headers && req.headers.authorization);
-  if (!auth) return '';
-  const m = auth.match(/^Bearer\s+(.+)$/i);
-  return m ? normalizeText(m[1]) : '';
+function parseBasicAuth(authHeader) {
+  const auth = normalizeText(authHeader);
+  if (!auth) return null;
+  const m = auth.match(/^Basic\s+(.+)$/i);
+  if (!m) return null;
+  let decoded = '';
+  try {
+    decoded = Buffer.from(m[1], 'base64').toString('utf8');
+  } catch {
+    return null;
+  }
+  const idx = decoded.indexOf(':');
+  if (idx === -1) return null;
+  return {
+    user: decoded.slice(0, idx),
+    pass: decoded.slice(idx + 1)
+  };
 }
 
 function requireAdmin(req, res) {
-  if (!ADMIN_TOKEN) {
+  if (!ADMIN_USER || !ADMIN_PASS) {
     res.status(500).json({ ok: false, error: 'Admin not configured.' });
     return false;
   }
-  const token = getAdminToken(req);
-  if (!token || token !== ADMIN_TOKEN) {
+
+  const creds = parseBasicAuth(req.headers && req.headers.authorization);
+  if (!creds || creds.user !== ADMIN_USER || creds.pass !== ADMIN_PASS) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Admin"');
     res.status(401).json({ ok: false, error: 'Unauthorized' });
     return false;
   }
+
   return true;
 }
 
@@ -198,7 +212,6 @@ app.get('/healthz', (_req, res) => {
 
 // ── ADMIN DASHBOARD ───────────────────────────────────
 app.get('/admin', (req, res) => {
-  // Allow token via query for initial load only.
   if (!requireAdmin(req, res)) return;
 
   res.status(200).type('html').send(`<!doctype html>
@@ -236,7 +249,6 @@ app.get('/admin', (req, res) => {
       .pill.no{border-color:rgba(192,57,43,0.5);color:#ffb4a9;}
       .muted{color:var(--muted);}
       .small{font-size:12px;line-height:1.4;color:var(--muted);}
-      .tokenBox{display:none;margin-top:14px;background:var(--card);border:1px dashed rgba(212,175,55,0.35);border-radius:14px;padding:12px;}
       .err{display:none;margin-top:12px;background:#1b0f0f;border:1px solid rgba(192,57,43,0.6);color:#ffb4a9;border-radius:14px;padding:10px;}
     </style>
   </head>
@@ -279,29 +291,11 @@ app.get('/admin', (req, res) => {
         </thead>
         <tbody id="tbody"></tbody>
       </table>
-
-      <div id="tokenBox" class="tokenBox">
-        <div class="small">Admin token not found. Paste it below:</div>
-        <div class="row" style="margin-top:10px;">
-          <input id="tokenInput" class="input" style="min-width:360px;" placeholder="ADMIN_TOKEN" />
-          <button id="saveToken" class="btn">Save</button>
-        </div>
-      </div>
     </div>
 
     <script>
       (function(){
-        const qs = new URLSearchParams(location.search);
-        const fromUrl = qs.get('token');
-        if(fromUrl){
-          sessionStorage.setItem('adminToken', fromUrl);
-          history.replaceState({}, '', location.pathname);
-        }
-
         const errEl = document.getElementById('err');
-        const tokenBox = document.getElementById('tokenBox');
-        const tokenInput = document.getElementById('tokenInput');
-        const saveToken = document.getElementById('saveToken');
         const logout = document.getElementById('logout');
         const refresh = document.getElementById('refresh');
         const statusSel = document.getElementById('status');
@@ -309,18 +303,13 @@ app.get('/admin', (req, res) => {
         const showDeleted = document.getElementById('showDeleted');
         const tbody = document.getElementById('tbody');
 
-        function token(){ return sessionStorage.getItem('adminToken') || ''; }
         function setErr(msg){
           errEl.textContent = msg || '';
           errEl.style.display = msg ? 'block' : 'none';
         }
-        function authHeaders(){
-          const t = token();
-          return t ? { 'Authorization': 'Bearer ' + t } : {};
-        }
 
         async function api(path){
-          const res = await fetch(path, { headers: authHeaders() });
+          const res = await fetch(path);
           const data = await res.json().catch(()=>({ ok:false, error:'Bad response' }));
           if(!res.ok || !data.ok){
             throw new Error(data && data.error ? data.error : 'Request failed');
@@ -329,7 +318,7 @@ app.get('/admin', (req, res) => {
         }
 
         async function post(path){
-          const res = await fetch(path, { method:'POST', headers: { ...authHeaders() } });
+          const res = await fetch(path, { method:'POST' });
           const data = await res.json().catch(()=>({ ok:false, error:'Bad response' }));
           if(!res.ok || !data.ok){
             throw new Error(data && data.error ? data.error : 'Request failed');
@@ -408,29 +397,19 @@ app.get('/admin', (req, res) => {
         }
 
         async function loadAll(){
-          if(!token()){
-            tokenBox.style.display = 'block';
-            return;
-          }
-          tokenBox.style.display = 'none';
           setErr('');
           try{
             await loadStats();
             await loadList();
           } catch(e){
             setErr(e.message || 'Failed to load');
-            if((e.message||'').toLowerCase().includes('unauthorized')) tokenBox.style.display = 'block';
           }
         }
 
-        saveToken?.addEventListener('click', ()=>{
-          const t = (tokenInput.value || '').trim();
-          if(!t) return;
-          sessionStorage.setItem('adminToken', t);
-          tokenInput.value = '';
-          loadAll();
+        logout.addEventListener('click', ()=>{
+          // Browser-managed; best-effort: reload to re-trigger auth.
+          location.href = '/admin';
         });
-        logout.addEventListener('click', ()=>{ sessionStorage.removeItem('adminToken'); location.href = '/admin'; });
         refresh.addEventListener('click', loadAll);
         statusSel.addEventListener('change', loadAll);
         showDeleted.addEventListener('change', loadAll);
