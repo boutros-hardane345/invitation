@@ -16,10 +16,13 @@
     }
 
     body {
-      background: var(--dark);
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(212,175,55,0.10), transparent 60%),
+        radial-gradient(900px 500px at 15% 110%, rgba(245,215,66,0.08), transparent 60%),
+        var(--dark);
       font-family: 'Montserrat', sans-serif;
       padding: 1rem; min-height: 100vh; overflow-x: hidden;
-      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ctext y='20' font-size='20'%3E⭐%3C/text%3E%3C/svg%3E") 12 12, auto;
+      cursor: auto;
     }
 
     /* ── CANVAS LAYERS ── */
@@ -30,12 +33,33 @@
     }
     #cursor-trail { z-index: 9999; }
 
+    /* Confetti restricted to the invitation card */
+    #card-confetti{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+      z-index:5;
+    }
+
     .page {
       max-width: 900px; margin: 0 auto;
       background: var(--surface);
       border-radius: 32px;
       box-shadow: 0 30px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,175,55,0.3);
       overflow: hidden; position: relative; z-index: 1;
+    }
+
+    /* Inner frame for a printed-card feel */
+    .page::after{
+      content:'';
+      position:absolute;
+      inset:14px;
+      border-radius:22px;
+      border:1px solid rgba(212,175,55,0.20);
+      pointer-events:none;
+      z-index:0;
     }
 
     /* ── GLITTER BORDER ── */
@@ -47,15 +71,12 @@
         #d4af37 0%, transparent 20%,
         #f5d742 40%, transparent 60%,
         #d4af37 80%, transparent 100%);
-      background-size: 400% 400%;
-      animation: borderGlitter 3s linear infinite;
+      background-size: 100% 100%;
+      /* Remove animated glitter border */
+      animation: none;
       z-index:-1;
     }
-    @keyframes borderGlitter {
-      0%{background-position:0% 50%}
-      50%{background-position:100% 50%}
-      100%{background-position:0% 50%}
-    }
+    /* borderGlitter removed */
 
     /* ── HERO ── */
     .hero {
@@ -91,10 +112,11 @@
       content:''; position:absolute; top:0; left:-100%;
       width:60%; height:100%;
       background: linear-gradient(90deg,transparent,rgba(212,175,55,0.15),transparent);
-      animation: heroShimmer 2.5s infinite;
+      /* Remove shimmer animation */
+      animation: none;
       pointer-events:none;
     }
-    @keyframes heroShimmer{0%{left:-100%}100%{left:200%}}
+    /* heroShimmer removed */
 
     /* ── PHOTO ── */
     .hero-photo {
@@ -158,7 +180,7 @@
     }
     /* (typewriter + cursor blink removed) */
 
-    .content{padding:1.8rem 1.5rem;}
+    .content{padding:1.8rem 1.5rem; position:relative; z-index:1;}
 
     /* ── SCROLL REVEAL ── */
     .scroll-reveal{opacity:0;transform:translateY(50px) scale(0.97);transition:opacity 0.7s ease,transform 0.7s ease;}
@@ -187,7 +209,7 @@
       position:relative;overflow:hidden;
     }
     .countdown-card::before{
-      content:'🎓';font-size:6rem;
+      content:'';font-size:6rem;
       position:absolute;top:50%;left:50%;
       transform:translate(-50%,-50%);
       opacity:0.04;pointer-events:none;
@@ -223,14 +245,63 @@
       transition:box-shadow 0.3s,transform 0.3s,border-left-color 0.4s;
       position:relative;overflow:hidden;
     }
+
+    /* A more "crazy" hero-card treatment for the Photoshoot section (no emoji) */
+    .info-card--photoshoot{
+      border-left-color: var(--gold2);
+      background:
+        radial-gradient(1200px 220px at 10% 0%, rgba(212,175,55,0.12), transparent 60%),
+        radial-gradient(900px 260px at 90% 20%, rgba(245,215,66,0.10), transparent 60%),
+        linear-gradient(180deg, #111, #0b0b0b);
+    }
+    .info-card--photoshoot::after{
+      content:'';
+      position:absolute; inset:-40% -60%;
+      background:linear-gradient(90deg, transparent, rgba(212,175,55,0.08), transparent);
+      transform:rotate(12deg);
+      animation: photoCardSheen 5.5s linear infinite;
+      pointer-events:none;
+    }
+    @keyframes photoCardSheen{
+      0%{transform:translateX(-40%) rotate(12deg)}
+      100%{transform:translateX(40%) rotate(12deg)}
+    }
+    .info-card--photoshoot h2{
+      position:relative;
+      text-transform:uppercase;
+      letter-spacing:1.5px;
+    }
+    .info-card--photoshoot h2::after{
+      content:'';
+      display:block;
+      height:2px;
+      width:84px;
+      margin-top:10px;
+      background:linear-gradient(90deg,var(--gold2),transparent);
+      opacity:0.9;
+    }
+    .info-card--photoshoot .info-line{
+      position:relative;
+      padding-left:18px;
+    }
+    .info-card--photoshoot .info-line::before{
+      content:'';
+      position:absolute;
+      left:0; top:0.78em;
+      width:8px; height:8px;
+      transform:translateY(-50%) rotate(45deg);
+      border:1px solid rgba(245,215,66,0.9);
+      box-shadow:0 0 10px rgba(212,175,55,0.25);
+    }
     .info-card::before{
       content:'';position:absolute;
       top:-50%;right:-50%;width:100%;height:200%;
       background:conic-gradient(transparent 0deg,rgba(212,175,55,0.04) 60deg,transparent 120deg);
-      animation:cardRotate 6s linear infinite;
+      /* Remove rotating background sheen */
+      animation:none;
       pointer-events:none;
     }
-    @keyframes cardRotate{to{transform:rotate(360deg)}}
+    /* cardRotate removed */
     .info-card:hover{
       box-shadow:0 12px 40px rgba(212,175,55,0.25);
       transform:translateX(6px) translateY(-2px);
@@ -238,11 +309,29 @@
     }
     .info-card h2{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:600;color:var(--gold);margin-bottom:0.8rem;display:flex;align-items:center;gap:8px;}
     .info-line{display:flex;align-items:center;gap:12px;font-size:0.95rem;margin:12px 0;flex-wrap:wrap;color:#fff;}
-    .info-line .emoji{font-size:1.3rem;min-width:36px;animation:emojiWiggle 3s ease-in-out infinite;}
-    @keyframes emojiWiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}
+    .info-line .emoji{font-size:1.3rem;min-width:36px;animation:none;}
     .dresscode{background:var(--gold);color:#000;padding:4px 14px;border-radius:40px;font-size:0.8rem;font-weight:600;display:inline-block;animation:badgePulse 2s ease-in-out infinite;}
     @keyframes badgePulse{0%,100%{box-shadow:0 0 0 0 rgba(212,175,55,0.5)}50%{box-shadow:0 0 0 6px rgba(212,175,55,0)}}
 
+
+    a.footer-admin,
+    a.footer-admin:link,
+    a.footer-admin:visited,
+    a.footer-admin:hover,
+    a.footer-admin:active,
+    a.footer-admin:focus{
+      color:inherit !important;
+      text-decoration:none !important;
+      border:0 !important;
+      opacity:1;
+      font-weight:300;
+      letter-spacing:0.5px;
+      outline:none;
+    }
+    a.footer-admin:hover{text-decoration:underline !important; text-decoration-thickness:1px; text-underline-offset:3px;}
+
+    .is-hidden{display:none !important;}
+    
     /* ── RSVP ── */
     .rsvp-box{
       background:#1c1c1c;border-radius:24px;padding:1.2rem;
@@ -255,9 +344,10 @@
       content:'';position:absolute;inset:0;
       background:linear-gradient(45deg,transparent 30%,rgba(212,175,55,0.05) 50%,transparent 70%);
       background-size:200% 200%;
-      animation:rsvpShine 3s linear infinite;
+      /* Remove RSVP shine animation */
+      animation:none;
     }
-    @keyframes rsvpShine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    /* rsvpShine removed */
     @keyframes rsvpGlow{
       0%,100%{box-shadow:0 0 10px rgba(212,175,55,0.2),inset 0 0 20px rgba(212,175,55,0.02)}
       50%    {box-shadow:0 0 40px rgba(212,175,55,0.5),inset 0 0 40px rgba(212,175,55,0.06)}
@@ -274,18 +364,19 @@
       cursor:pointer;width:100%;max-width:280px;
       margin:1rem auto 0;display:block;
       letter-spacing:1px;text-decoration:none;line-height:1.5;
-      animation:btnBounce 1.8s ease-in-out infinite, btnShine 3s linear infinite;
+      /* Remove background shine animation */
+      animation:btnBounce 1.8s ease-in-out infinite;
       position:relative;overflow:hidden;z-index:1;
     }
     .btn-join::after{
       content:'';position:absolute;inset:0;border-radius:50px;
       background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);
       transform:translateX(-100%);
-      animation:btnSwipe 2s ease-in-out infinite;
+      /* Remove swipe highlight animation */
+      animation:none;
     }
     @keyframes btnBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px);box-shadow:0 16px 32px rgba(212,175,55,0.6)}}
-    @keyframes btnShine{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-    @keyframes btnSwipe{0%{transform:translateX(-100%)}60%,100%{transform:translateX(200%)}}
+    /* btnShine + btnSwipe removed */
     .btn-join:hover{animation:none;transform:scale(1.08);background:linear-gradient(135deg,#f5d742,#fff176,#f5d742);box-shadow:0 0 30px rgba(212,175,55,0.8);}
     .btn-disabled{background:#5a5a5a;color:#ccc;cursor:not-allowed;box-shadow:none;pointer-events:none;opacity:0.6;animation:none;}
 
@@ -313,9 +404,10 @@
     .rsvp-radio-group{display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap;}
     .rsvp-radio{
       display:flex;align-items:center;gap:0.5rem;
-      background:#000;border:1px solid rgba(212,175,55,0.55);
-      padding:10px 12px;border-radius:999px;cursor:pointer;
+      background:transparent;border:none;
+      padding:4px 6px;border-radius:999px;cursor:pointer;
       user-select:none;
+      color:#fff;
     }
     .rsvp-radio input{accent-color:var(--gold2);}
     .rsvp-guest-list{display:grid;gap:0.55rem;}
@@ -345,10 +437,21 @@
     .deadline-note{font-size:0.75rem;color:var(--gold);margin-top:0.8rem;}
 
     /* ── CLOSING ── */
-    .closing{text-align:center;font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold);}
-    .closing .spin{display:inline-block;animation:spinEmoji 3s linear infinite;}
+    .closing{
+      text-align:center;
+      font-family:'Permanent Marker',cursive;
+      font-size:1.2rem;
+      font-weight:400;
+      letter-spacing:1px;
+      color:#000;
+      background:linear-gradient(180deg, rgba(245,215,66,0.92), rgba(212,175,55,0.88));
+      border-top:1px solid rgba(0,0,0,0.25);
+      border-bottom:1px solid rgba(0,0,0,0.25);
+      padding:1.05rem 1rem;
+      margin:0;
+    }
+    .closing .spin{display:inline-block;animation:none;}
     .closing .bounce{display:inline-block;animation:bounceEmoji 1s ease-in-out infinite;}
-    @keyframes spinEmoji{to{transform:rotate(360deg)}}
     @keyframes bounceEmoji{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 
 
@@ -369,6 +472,8 @@
     @media(max-width:600px){
       body{padding:0.5rem;}
       .content{padding:1.2rem;}
+      .page::after{inset:10px;border-radius:20px;}
+      .closing{margin:0;}
       .hero{flex-direction:column;gap:1rem;}
       .hero-photo,.photo-wrap{width:80px;height:80px;}
       .hero .friends-style{font-size:1.3rem;}
@@ -392,10 +497,13 @@
 <body>
 
 <canvas id="bg-canvas"></canvas>
-<canvas id="cursor-trail"></canvas>
-<div id="toast">🎉 Let's celebrate!</div>
+<canvas id="cursor-trail" style="display:none;"></canvas>
+<div id="toast">Let's celebrate!</div>
 
 <div class="page">
+
+  <!-- Confetti canvas clipped to card -->
+  <canvas id="card-confetti"></canvas>
 
   <!-- HERO -->
   <div class="hero">
@@ -403,7 +511,7 @@
     <div class="photo-wrap">
       <div class="orbit-ring"></div>
       <div class="orbit-ring2"></div>
-      <img src="photo.jpg" alt="Photo" class="hero-photo" id="heroPhoto" title="Tap me 🎉">
+      <img src="photo.jpg" alt="Photo" class="hero-photo" id="heroPhoto" title="Tap me">
     </div>
     <div class="hero-text">
       <div class="friends-style">SEASON : 20 - EPISODE : 26</div>
@@ -422,25 +530,25 @@
         <div class="timer-unit"><span class="t-num" id="t-mins">--</span><span class="t-label">Minutes</span></div>
         <div class="timer-unit"><span class="t-num" id="t-secs">--</span><span class="t-label">Seconds</span></div>
       </div>
-      <h3 style="margin-top:0.4rem;">until we celebrate! 🎓</h3>
+       <h3 class="countdown-subtitle" style="margin-top:0.4rem;">until we celebrate!</h3>
     </div>
 
     <!-- Event details -->
-    <div class="info-card scroll-reveal">
-      <h2>📸 Photoshoot in Ehmej</h2>
-      <div class="info-line"><span class="emoji">📅</span> Thursday, 18 June 2026</div>
-      <div class="info-line"><span class="emoji">⏰</span> 10:00 AM – 12:30 PM</div>
-      <div class="info-line"><span class="emoji">🏡</span> Ehmej</div>
-      <div class="info-line"><span class="emoji">👗</span> <span class="dresscode">Dress code: Smart casual</span> – elegant & comfortable</div>
+    <div class="info-card info-card--photoshoot scroll-reveal">
+      <h2>Photoshoot in Ehmej</h2>
+      <div class="info-line">Thursday, 18 June 2026</div>
+      <div class="info-line">10:00 AM – 12:30 PM</div>
+      <div class="info-line">Ehmej</div>
+      <div class="info-line"><span class="dresscode">Dress code: Smart casual</span> – elegant & comfortable</div>
     </div>
 
     <!-- Drinks & Appetizers -->
     <div class="info-card scroll-reveal">
-      <h2>🍾 Drinks & Appetizers</h2>
+      <h2>Drinks & Appetizers</h2>
       <p style="line-height:2.2;">
-        🍹 Drinks courtesy of <strong style="color:var(--gold);">The Collector Bar</strong><br>
-        🥗 Appetizers by <strong style="color:var(--gold);">Kammesh</strong><br>
-        🍬 Homemade sweets & savory bites<br><br>
+        Drinks courtesy of <strong style="color:var(--gold);">The Collector Bar</strong><br>
+        Appetizers by <strong style="color:var(--gold);">Kammesh</strong><br>
+        Homemade sweets & savory bites<br><br>
         Celebrate with fine flavours and warm company.
       </p>
     </div>
@@ -451,10 +559,9 @@
       Please confirm your attendance below.
 
       <form id="rsvpForm" class="rsvp-form" autocomplete="on" novalidate>
-        <input type="text" id="hpField" name="hp" tabindex="-1" autocomplete="off" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+        <input type="text" id="hpField" name="hp" tabindex="-1" autocomplete="off" class="is-hidden" aria-hidden="true">
 
         <div class="rsvp-row">
-          <label>Attendance</label>
           <div class="rsvp-radio-group">
             <label class="rsvp-radio"><input type="radio" name="status" value="yes"> Coming</label>
             <label class="rsvp-radio"><input type="radio" name="status" value="no"> Not coming</label>
@@ -477,19 +584,19 @@
           <input class="rsvp-input" id="partySize" name="partySize" type="number" inputmode="numeric" min="1" step="1" value="1" disabled>
         </div>
 
-        <div class="rsvp-row" id="guestNamesRow" style="display:none;">
+        <div class="rsvp-row is-hidden" id="guestNamesRow">
           <label>Guest name(s)</label>
           <div id="guestNames" class="rsvp-guest-list"></div>
         </div>
 
         <button id="rsvpSubmit" class="btn-join" type="submit">Submit RSVP</button>
 
-        <a id="joinGroupBtn" class="btn-secondary" href="https://chat.whatsapp.com/KzUVoeTAuCgCxOpV3a6MCr" target="_blank" rel="noopener noreferrer" style="display:none;">Join WhatsApp group</a>
+        <a id="joinGroupBtn" class="btn-secondary is-hidden" href="https://chat.whatsapp.com/KzUVoeTAuCgCxOpV3a6MCr" target="_blank" rel="noopener noreferrer">Join WhatsApp group</a>
       </form>
 
       <div id="rsvpMessage" class="success-message"></div>
       <div id="rsvpError" class="error-message"></div>
-      <div id="deadlineMessage" class="deadline-warning" style="display:none;">⛔ The RSVP deadline (15 June 2026) has passed. We'll miss you!</div>
+      <div id="deadlineMessage" class="deadline-warning is-hidden">RSVP is closed. The deadline (15 June 2026) has passed.</div>
       <div class="deadline-note">Deadline to RSVP: <strong>15 June 2026</strong>.</div>
     </div>
 
@@ -497,7 +604,7 @@
     <div class="closing scroll-reveal">
       Come with positive energy, your brightest smile, and a heart full of joy.<br>
       I can't wait to celebrate this milestone with you.<br>
-      See you in Ehmej <span class="bounce">💛</span> <span class="spin">✨</span> <span class="bounce">🎓</span>
+      See you in Ehmej.
     </div>
 
     <!-- Logos -->
@@ -513,7 +620,7 @@
 
   <footer>
     Ehmej • 18 June 2026 • 10:00 – 12:30 •
-    <a href="/admin/login" target="_blank" rel="noopener noreferrer" style="color:#b89a3a;text-decoration:none;">Boutros Hardane</a>
+    <a href="/admin/login" target="_blank" rel="noopener noreferrer" class="footer-admin">Boutros Hardane</a>
   </footer>
 </div>
 
@@ -522,6 +629,21 @@ const RSVP_DEADLINE_ISO = "2026-06-15T23:59:59+03:00";
 const RSVP_DEADLINE = new Date(RSVP_DEADLINE_ISO);
 const EVENT_DATE    = new Date(2026,5,18,10,0,0);
 const GOLD          = ['#d4af37','#f5d742','#b8860b','#ffffff','#e5c87b','#fffacd'];
+
+// Confetti clipped to the invitation card
+const cardConfetti = (function(){
+  const c = document.getElementById('card-confetti');
+  if(!c || typeof confetti !== 'function') return null;
+  // Let the library handle canvas sizing reliably.
+  const inst = confetti.create(c, { resize: true, useWorker: false });
+  return (opts)=>inst({ colors: GOLD, ...opts });
+})();
+
+function fireCardConfetti(opts){
+  if(cardConfetti) return cardConfetti(opts);
+  // Fallback to full-page confetti
+  return confetti({ colors: GOLD, ...opts });
+}
 
 function isAfterDeadline(){ return new Date() > RSVP_DEADLINE; }
 
@@ -550,7 +672,7 @@ const obs = new IntersectionObserver(entries=>{
 },{threshold:0.12});
 document.querySelectorAll('.scroll-reveal').forEach(el=>obs.observe(el));
 
-// ── FLOATING PARTICLES ───────────────────────────────
+// ── FLOATING PARTICLES (stars background) ─────────────
 (function(){
   const c = document.getElementById('bg-canvas');
   const ctx = c.getContext('2d');
@@ -590,9 +712,10 @@ document.querySelectorAll('.scroll-reveal').forEach(el=>obs.observe(el));
     requestAnimationFrame(draw);
   }
   draw();
-})();
+ })();
 
-// ── CURSOR TRAIL ─────────────────────────────────────
+// ── CURSOR TRAIL (disabled for card-like feel) ────────
+/*
 (function(){
   const c = document.getElementById('cursor-trail');
   const ctx = c.getContext('2d');
@@ -621,15 +744,20 @@ document.querySelectorAll('.scroll-reveal').forEach(el=>obs.observe(el));
     requestAnimationFrame(draw);
   }
   draw();
-})();
+ })();
+*/
 
-// ── FALLING CONFETTI (forever) ───────────────────────
+// ── FALLING CONFETTI (disabled for card-like feel) ───
 function fallingConfetti(){
-  confetti({particleCount:2, angle:90,spread:40,origin:{x:Math.random()*0.3,y:0},          colors:GOLD,gravity:0.8,scalar:1.1,drift:0.3,ticks:350});
-  confetti({particleCount:3, angle:90,spread:60,origin:{x:0.3+Math.random()*0.4,y:0},      colors:GOLD,gravity:0.7,scalar:1.0,drift:Math.random()*0.6-0.3,ticks:380});
-  confetti({particleCount:2, angle:90,spread:40,origin:{x:0.7+Math.random()*0.3,y:0},      colors:GOLD,gravity:0.8,scalar:1.1,drift:-0.3,ticks:350});
+  // Longer-lived particles so they reach the bottom of the card.
+  fireCardConfetti({particleCount:2, angle:90,spread:40,origin:{x:Math.random()*0.3,y:0},          gravity:0.95,scalar:1.1,drift:0.2,ticks:900});
+  fireCardConfetti({particleCount:3, angle:90,spread:60,origin:{x:0.3+Math.random()*0.4,y:0},      gravity:0.90,scalar:1.0,drift:Math.random()*0.5-0.25,ticks:950});
+  fireCardConfetti({particleCount:2, angle:90,spread:40,origin:{x:0.7+Math.random()*0.3,y:0},      gravity:0.95,scalar:1.1,drift:-0.2,ticks:900});
 }
-setInterval(fallingConfetti,300);
+// Run only when user hasn't requested reduced motion
+if(!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)){
+  setInterval(fallingConfetti,300);
+}
 
 // ── PHOTO CLICK → MEGA PARTY ─────────────────────────
 document.getElementById('heroPhoto').addEventListener('click',function(){
@@ -637,15 +765,15 @@ document.getElementById('heroPhoto').addEventListener('click',function(){
   let deg=0; const shake=setInterval(()=>{ deg=(deg===0?-15:deg<0?15:deg>0?-15:0); this.style.transform=`scale(1.2) rotate(${deg}deg)`; },80);
   setTimeout(()=>{ clearInterval(shake); this.style.transform=''; this.style.animation='photoPulse 2s ease-in-out infinite, photoSpin 20s linear infinite'; },500);
 
-  confetti({particleCount:250,spread:180,origin:{x:0.5,y:0.05},colors:GOLD,startVelocity:55,gravity:0.8,scalar:1.3,ticks:500});
+  fireCardConfetti({particleCount:250,spread:180,origin:{x:0.5,y:0.05},startVelocity:55,gravity:0.8,scalar:1.3,ticks:500});
   setTimeout(()=>{
-    confetti({particleCount:120,spread:90,angle:60,origin:{x:0,y:0.3},colors:GOLD,startVelocity:40,ticks:350});
-    confetti({particleCount:120,spread:90,angle:120,origin:{x:1,y:0.3},colors:GOLD,startVelocity:40,ticks:350});
+    fireCardConfetti({particleCount:120,spread:90,angle:60,origin:{x:0,y:0.3},startVelocity:40,ticks:350});
+    fireCardConfetti({particleCount:120,spread:90,angle:120,origin:{x:1,y:0.3},startVelocity:40,ticks:350});
   },250);
-  setTimeout(()=>confetti({particleCount:200,spread:360,origin:{x:0.5,y:0.5},colors:GOLD,startVelocity:15,gravity:0.3,scalar:0.8,ticks:600}),600);
+  setTimeout(()=>fireCardConfetti({particleCount:200,spread:360,origin:{x:0.5,y:0.5},startVelocity:15,gravity:0.3,scalar:0.8,ticks:600}),600);
   setTimeout(()=>{
-    confetti({particleCount:80,spread:60,origin:{x:0.2,y:0.2},colors:GOLD,startVelocity:30});
-    confetti({particleCount:80,spread:60,origin:{x:0.8,y:0.2},colors:GOLD,startVelocity:30});
+    fireCardConfetti({particleCount:80,spread:60,origin:{x:0.2,y:0.2},startVelocity:30});
+    fireCardConfetti({particleCount:80,spread:60,origin:{x:0.8,y:0.2},startVelocity:30});
   },900);
 });
 
@@ -657,7 +785,7 @@ function logoParty(el){
   const rect = el.getBoundingClientRect();
   const x = (rect.left + rect.width/2) / window.innerWidth;
   const y = (rect.top + rect.height/2) / window.innerHeight;
-  confetti({particleCount:100,spread:120,origin:{x,y},colors:GOLD,startVelocity:30,ticks:300});
+  fireCardConfetti({particleCount:100,spread:120,origin:{x,y},startVelocity:30,ticks:300});
 }
 
 // ── FIREWORKS ────────────────────────────────────────
@@ -665,11 +793,11 @@ function launchFireworks(){
   let count=0;
   const interval=setInterval(()=>{
     const x=Math.random(); const y=Math.random()*0.6;
-    confetti({particleCount:60,spread:360,origin:{x,y},colors:GOLD,startVelocity:25+Math.random()*20,gravity:0.4,scalar:0.9,ticks:400});
+    fireCardConfetti({particleCount:60,spread:360,origin:{x,y},startVelocity:25+Math.random()*20,gravity:0.4,scalar:0.9,ticks:400});
     count++;
     if(count>=12) clearInterval(interval);
   },180);
-  showToast('🎆 Fireworks! 🎆');
+  showToast('Fireworks');
 }
 
 // ── TOAST ────────────────────────────────────────────
@@ -729,10 +857,10 @@ function showToast(msg){
     const status = getStatus();
     const partySize = parseInt(String(partySizeEl.value || '1'), 10);
     guestWrap.innerHTML = '';
-    guestRow.style.display = 'none';
+    guestRow.classList.add('is-hidden');
     if(status !== 'yes') return;
     if(!Number.isFinite(partySize) || partySize <= 1) return;
-    guestRow.style.display = '';
+    guestRow.classList.remove('is-hidden');
     const count = partySize - 1;
     for(let i=0;i<count;i++){
       const input = document.createElement('input');
@@ -747,7 +875,7 @@ function showToast(msg){
 
   function onStatusChange(){
     resetMessages();
-    joinBtn.style.display='none';
+    joinBtn.classList.add('is-hidden');
 
     const status = getStatus();
     if(status === 'yes'){
@@ -763,19 +891,19 @@ function showToast(msg){
   function enforceDeadlineUi(){
     if(isAfterDeadline()){
       setDisabledAll(true);
-      deadlineDiv.style.display='block';
+      deadlineDiv.classList.remove('is-hidden');
       resetMessages();
       showError('RSVP unavailable (deadline passed).');
       return true;
     }
-    deadlineDiv.style.display='none';
+    deadlineDiv.classList.add('is-hidden');
     return false;
   }
 
   function enforceHostedUi(){
     if(location.protocol === 'file:'){
       setDisabledAll(true);
-      deadlineDiv.style.display='none';
+      deadlineDiv.classList.add('is-hidden');
       resetMessages();
       showError('RSVP form is unavailable when opened as a local file. Please open the website link (https) or run the local server (http://localhost:3000).');
       return true;
@@ -791,7 +919,7 @@ function showToast(msg){
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     resetMessages();
-    joinBtn.style.display='none';
+    joinBtn.classList.add('is-hidden');
 
     if(enforceDeadlineUi()) return;
 
@@ -828,13 +956,13 @@ function showToast(msg){
       }
 
       if(status === 'yes'){
-        showSuccess('✅ RSVP saved. See you on 18 June in Ehmej!');
-        joinBtn.style.display = 'block';
-        confetti({particleCount:200,spread:130,origin:{x:0.5,y:0.7},colors:GOLD,startVelocity:45,ticks:400});
-        setTimeout(()=>confetti({particleCount:100,spread:360,origin:{x:0.5,y:0.5},colors:GOLD,startVelocity:20,gravity:0.3,ticks:500}),400);
-        showToast('🥂 See you in Ehmej! 🎓');
+        showSuccess('✓ RSVP saved. See you on 18 June in Ehmej!');
+        joinBtn.classList.remove('is-hidden');
+        fireCardConfetti({particleCount:200,spread:130,origin:{x:0.5,y:0.7},startVelocity:45,ticks:400});
+        setTimeout(()=>fireCardConfetti({particleCount:100,spread:360,origin:{x:0.5,y:0.5},startVelocity:20,gravity:0.3,ticks:500}),400);
+        showToast('See you in Ehmej');
       } else {
-        showSuccess("✅ Thanks for letting me know. We'll miss you!");
+        showSuccess("✓ Thanks for letting me know. We'll miss you!");
         showToast("Thanks for the update");
       }
     } catch(_err){
@@ -858,8 +986,9 @@ function showToast(msg){
 document.addEventListener('dblclick',e=>{
   const x=e.clientX/window.innerWidth;
   const y=e.clientY/window.innerHeight;
-  confetti({particleCount:60,spread:80,origin:{x,y},colors:GOLD,startVelocity:25,ticks:250});
+  fireCardConfetti({particleCount:60,spread:80,origin:{x,y},startVelocity:25,ticks:250});
 });
 </script>
 </body>
 </html>
+   

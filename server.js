@@ -449,7 +449,6 @@ app.get('/admin', requireAdminPage, (req, res) => {
         function renderRow(r){
           const tr = document.createElement('tr');
           const guests = Array.isArray(r.guestNames) && r.guestNames.length ? r.guestNames.join(', ') : '';
-          const diet = '';
           const isDel = r.deleted === true;
           tr.innerHTML = [
             '<td>' + escapeHtml(r.inviterName || '') + (isDel ? ' <span class="muted">(deleted)</span>' : '') + '</td>',
