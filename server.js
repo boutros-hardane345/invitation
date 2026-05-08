@@ -388,12 +388,27 @@ app.get('/admin', requireAdminPage, (req, res) => {
       .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
       .toggle{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px;}
 
-      table{width:100%;border-collapse:separate;border-spacing:0;margin-top:12px;background:rgba(17,17,17,0.92);border:1px solid rgba(212,175,55,0.18);border-radius:16px;overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,0.45);}
+      table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;margin-top:12px;background:rgba(17,17,17,0.92);border:1px solid rgba(212,175,55,0.18);border-radius:16px;overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,0.45);}
       thead th{position:sticky;top:64px;z-index:5;}
       th,td{padding:11px 10px;border-bottom:1px solid rgba(255,255,255,0.06);vertical-align:top;text-align:left;font-size:13px;}
       th{color:var(--gold);font-size:12px;letter-spacing:1px;text-transform:uppercase;background:var(--card2);}
       tbody tr:nth-child(2n) td{background:rgba(255,255,255,0.012);}
       tr:hover td{background:rgba(255,255,255,0.03);}
+
+      .td-clip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:0.2px;}
+      .row-click{cursor:pointer;}
+      .row-click:hover{outline:1px solid rgba(245,215,66,0.12);outline-offset:-1px;}
+
+      .details-row td{padding:0;border-bottom:1px solid rgba(255,255,255,0.06);}
+      .details-box{padding:12px;background:linear-gradient(180deg, rgba(12,12,12,1), rgba(7,7,7,1));border-top:1px solid rgba(212,175,55,0.12);}
+      .details-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+      .details-line{display:flex;gap:10px;align-items:flex-start;}
+      .details-line .k{min-width:86px;color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;}
+      .details-line .v{font-size:13px;line-height:1.4;color:#fff;}
+      .chiplist{display:flex;flex-wrap:wrap;gap:8px;}
+      .namechip{display:inline-flex;align-items:center;border:1px solid rgba(212,175,55,0.18);background:rgba(0,0,0,0.35);border-radius:999px;padding:6px 10px;font-weight:850;color:#fff;}
+      .actions-inline{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
 
       .pill{display:inline-block;padding:3px 9px;border-radius:999px;border:1px solid rgba(212,175,55,0.32);color:var(--gold2);font-weight:900;font-size:12px;}
       .pill.no{border-color:rgba(192,57,43,0.5);color:#ffb4a9;}
@@ -461,6 +476,14 @@ app.get('/admin', requireAdminPage, (req, res) => {
       </div>
 
       <table>
+        <colgroup>
+          <col style="width: 26%;" />
+          <col style="width: 18%;" />
+          <col style="width: 12%;" />
+          <col style="width: 10%;" />
+          <col style="width: 24%;" />
+          <col style="width: 10%;" />
+        </colgroup>
         <thead>
           <tr>
             <th>Name</th>
@@ -573,45 +596,89 @@ app.get('/admin', requireAdminPage, (req, res) => {
         }
 
         function renderRow(r){
-          const tr = document.createElement('tr');
-          const guests = Array.isArray(r.guestNames) && r.guestNames.length ? r.guestNames.join(', ') : '';
+          const frag = document.createDocumentFragment();
+          const rowId = String(r.inviterPhone || '');
+          const guestsArr = Array.isArray(r.guestNames) ? r.guestNames.filter(Boolean) : [];
+          const guestsShort = guestsArr.length ? guestsArr.join(', ') : '';
           const isDel = r.deleted === true;
+
+          const tr = document.createElement('tr');
+          tr.className = 'row-click';
+          tr.dataset.rowid = rowId;
           tr.innerHTML = [
-            '<td><strong>' + escapeHtml(r.inviterName || '') + '</strong>' + (isDel ? ' <span class="muted">(deleted)</span>' : '') + '</td>',
-            '<td><button class="link" type="button" data-phone="' + escapeHtml(r.inviterPhone || '') + '">' + escapeHtml(r.inviterPhone || '') + '</button></td>',
+            '<td class="td-clip"><strong>' + escapeHtml(r.inviterName || '') + '</strong>' + (isDel ? ' <span class="muted">(deleted)</span>' : '') + '</td>',
+            '<td class="td-clip mono"><button class="link mono" type="button" data-phone="' + escapeHtml(rowId) + '">' + escapeHtml(rowId) + '</button></td>',
             '<td>' + (r.status === 'yes' ? '<span class="pill">yes</span>' : '<span class="pill no">no</span>') + '</td>',
             '<td>' + (r.status === 'yes' ? String(r.partySize || 0) : '-') + '</td>',
-            '<td class="small">' + escapeHtml(guests) + '</td>',
+            '<td class="td-clip small">' + escapeHtml(guestsShort) + '</td>',
             '<td></td>'
           ].join('');
 
+          const details = document.createElement('tr');
+          details.className = 'details-row';
+          details.dataset.rowid = rowId;
+          details.style.display = 'none';
+          const guestsChips = guestsArr.length
+            ? '<div class="chiplist">' + guestsArr.map(n=>'<span class="namechip">' + escapeHtml(n) + '</span>').join('') + '</div>'
+            : '<span class="muted">None</span>';
+
+          details.innerHTML = '<td colspan="6">'
+            + '<div class="details-box">'
+            +   '<div class="details-grid">'
+            +     '<div class="details-line"><div class="k">Name</div><div class="v">' + escapeHtml(r.inviterName || '') + '</div></div>'
+            +     '<div class="details-line"><div class="k">Phone</div><div class="v mono">' + escapeHtml(rowId) + '</div></div>'
+            +     '<div class="details-line"><div class="k">Status</div><div class="v">' + (r.status === 'yes' ? 'Coming' : 'Declined') + '</div></div>'
+            +     '<div class="details-line"><div class="k">Party</div><div class="v">' + (r.status === 'yes' ? String(r.partySize || 0) : '-') + '</div></div>'
+            +   '</div>'
+            +   '<div style="margin-top:10px;" class="details-line"><div class="k">Guests</div><div class="v">' + guestsChips + '</div></div>'
+            +   '<div class="actions-inline" data-actions="1"></div>'
+            + '</div>'
+          + '</td>';
+
           const phoneBtn = tr.querySelector('button[data-phone]');
-          phoneBtn && (phoneBtn.onclick = ()=>copyText(r.inviterPhone));
+          phoneBtn && (phoneBtn.onclick = (e)=>{ e.stopPropagation(); copyText(rowId); });
+
           const actionTd = tr.lastElementChild;
-          if(isDel){
-            const b = document.createElement('button');
-            b.className = 'btn';
-            b.textContent = 'Restore';
-            b.onclick = async ()=>{
-              if(!confirm('Restore this RSVP?')) return;
-              setErr('');
-              try{ await post('/api/admin/rsvps/' + encodeURIComponent(r.inviterPhone) + '/restore'); await loadAll(); }
-              catch(e){ setErr(e.message || 'Restore failed'); }
-            };
-            actionTd.appendChild(b);
-          } else {
-            const b = document.createElement('button');
-            b.className = 'btn btn-danger';
-            b.textContent = 'Delete';
-            b.onclick = async ()=>{
-              if(!confirm('Delete RSVP for ' + (r.inviterName||'') + ' (' + (r.inviterPhone||'') + ')?')) return;
-              setErr('');
-              try{ await post('/api/admin/rsvps/' + encodeURIComponent(r.inviterPhone) + '/delete'); await loadAll(); }
-              catch(e){ setErr(e.message || 'Delete failed'); }
-            };
-            actionTd.appendChild(b);
-          }
-          return tr;
+          const actionsInline = details.querySelector('[data-actions]');
+          const addActionButtons = (container)=>{
+            container.innerHTML = '';
+            if(isDel){
+              const b = document.createElement('button');
+              b.className = 'btn';
+              b.textContent = 'Restore';
+              b.onclick = async (e)=>{
+                e.stopPropagation();
+                if(!confirm('Restore this RSVP?')) return;
+                setErr('');
+                try{ await post('/api/admin/rsvps/' + encodeURIComponent(rowId) + '/restore'); burst(80); await loadAll(); }
+                catch(err){ setErr(err.message || 'Restore failed'); }
+              };
+              container.appendChild(b);
+            } else {
+              const b = document.createElement('button');
+              b.className = 'btn btn-danger';
+              b.textContent = 'Delete';
+              b.onclick = async (e)=>{
+                e.stopPropagation();
+                if(!confirm('Delete RSVP for ' + (r.inviterName||'') + ' (' + rowId + ')?')) return;
+                setErr('');
+                try{ await post('/api/admin/rsvps/' + encodeURIComponent(rowId) + '/delete'); burst(60); await loadAll(); }
+                catch(err){ setErr(err.message || 'Delete failed'); }
+              };
+              container.appendChild(b);
+            }
+          };
+          addActionButtons(actionTd);
+          addActionButtons(actionsInline);
+
+          tr.onclick = ()=>{
+            const open = details.style.display !== 'none';
+            details.style.display = open ? 'none' : '';
+          };
+
+          frag.appendChild(tr);
+          frag.appendChild(details);
+          return frag;
         }
 
         function renderCard(r){
@@ -699,10 +766,11 @@ app.get('/admin', requireAdminPage, (req, res) => {
             const empty = document.createElement('tr');
             empty.innerHTML = '<td colspan="6" class="small">No results. Try clearing search or changing filters.</td>';
             tbody.appendChild(empty);
-          }
-          for(const r of data.items){
-            tbody.appendChild(renderRow(r));
-            cards.appendChild(renderCard(r));
+          } else {
+            for(const r of data.items){
+              tbody.appendChild(renderRow(r));
+              cards.appendChild(renderCard(r));
+            }
           }
 
           const from = state.total === 0 ? 0 : state.skip + 1;
