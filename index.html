@@ -481,11 +481,6 @@
           <div id="guestNames" class="rsvp-guest-list"></div>
         </div>
 
-        <div class="rsvp-row">
-          <label for="dietNote">Diet note (optional)</label>
-          <textarea class="rsvp-textarea" id="dietNote" name="dietNote" placeholder="Allergies, dietary restrictions, etc."></textarea>
-        </div>
-
         <button id="rsvpSubmit" class="btn-join" type="submit">Submit RSVP</button>
 
         <a id="joinGroupBtn" class="btn-secondary" href="https://chat.whatsapp.com/KzUVoeTAuCgCxOpV3a6MCr" target="_blank" rel="noopener noreferrer" style="display:none;">Join WhatsApp group</a>
@@ -515,7 +510,10 @@
     </div>
   </div>
 
-  <footer>Ehmej • 18 June 2026 • 10:00 – 12:30</footer>
+  <footer>
+    Ehmej • 18 June 2026 • 10:00 – 12:30 •
+    <a href="/admin/login" target="_blank" rel="noopener noreferrer" style="color:#b89a3a;text-decoration:none;">Boutros Hardane</a>
+  </footer>
 </div>
 
 <script>
@@ -799,7 +797,6 @@ function showToast(msg){
     const status = getStatus();
     const inviterName = String(form.inviterName.value || '').trim();
     const inviterPhone = normalizePhone(form.inviterPhone.value);
-    const dietNote = String(form.dietNote.value || '').trim();
     const hp = String(form.hp?.value || '').trim();
     const partySize = status === 'yes' ? parseInt(String(partySizeEl.value || '1'), 10) : 0;
 
@@ -822,7 +819,7 @@ function showToast(msg){
       const resp = await fetch('/api/rsvp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, inviterName, inviterPhone, partySize, guestNames, dietNote, hp })
+        body: JSON.stringify({ status, inviterName, inviterPhone, partySize, guestNames, hp })
       });
       const data = await resp.json().catch(()=>({ ok:false, error:'Invalid server response.' }));
       if(!resp.ok || !data.ok){

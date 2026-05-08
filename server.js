@@ -1,5 +1,6 @@
 const path = require('path');
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const { MongoClient } = require('mongodb');
 
 const app = express();
@@ -12,6 +13,7 @@ const MONGODB_DB = process.env.MONGODB_DB || 'graduation';
 const MONGODB_COLLECTION = process.env.MONGODB_COLLECTION || 'rsvps';
 const ADMIN_USER = process.env.ADMIN_USER || '';
 const ADMIN_PASS = process.env.ADMIN_PASS || '';
+const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || '';
 
 let mongoClient;
 let mongoCollection;
@@ -104,6 +106,96 @@ function rateLimitOk(ip) {
 
 app.disable('x-powered-by');
 app.use(express.json({ limit: '64kb' }));
+app.use(express.urlencoded({ extended: false }));
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+if (ADMIN_SESSION_SECRET) {
+  app.use(cookieParser(ADMIN_SESSION_SECRET));
+}
+
+function isHttpsReq(req) {
+  if (req.secure) return true;
+  const xf = normalizeText(req.headers && req.headers['x-forwarded-proto']);
+  return xf.toLowerCase() === 'https';
+}
+
+const ADMIN_COOKIE_NAME = 'admin_session';
+const ADMIN_COOKIE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+function adminConfigured() {
+  return Boolean(ADMIN_USER && ADMIN_PASS && ADMIN_SESSION_SECRET);
+}
+
+function isAdminSession(req) {
+  return Boolean(req.signedCookies && req.signedCookies[ADMIN_COOKIE_NAME] === '1');
+}
+
+function requireAdminPage(req, res, next) {
+  if (!adminConfigured()) return res.status(500).type('html').send('Admin not configured.');
+  if (!isAdminSession(req)) return res.redirect('/admin/login');
+  return next();
+}
+
+function requireAdminApi(req, res, next) {
+  if (!adminConfigured()) return res.status(500).json({ ok: false, error: 'Admin not configured.' });
+  if (!isAdminSession(req)) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  return next();
+}
+
+// Admin login rate limit (strict lockout window)
+const ADMIN_LOGIN_WINDOW_MS = parseInt(process.env.ADMIN_LOGIN_RATE_WINDOW_MS || '600000', 10);
+const ADMIN_LOGIN_MAX = parseInt(process.env.ADMIN_LOGIN_RATE_MAX || '10', 10);
+const adminLoginBuckets = new Map();
+function adminLoginOk(ip) {
+  const now = Date.now();
+  const cur = adminLoginBuckets.get(ip) || { n: 0, resetAt: now + ADMIN_LOGIN_WINDOW_MS };
+  if (now > cur.resetAt) {
+    cur.n = 0;
+    cur.resetAt = now + ADMIN_LOGIN_WINDOW_MS;
+  }
+  cur.n += 1;
+  adminLoginBuckets.set(ip, cur);
+  return cur.n <= ADMIN_LOGIN_MAX;
+}
+
+app.get('/admin/login', (req, res) => {
+  if (!adminConfigured()) return res.status(500).type('html').send('Admin not configured.');
+  if (isAdminSession(req)) return res.redirect('/admin');
+  return res.render('login', { error: '' });
+});
+
+app.post('/admin/login', (req, res) => {
+  if (!adminConfigured()) return res.status(500).type('html').send('Admin not configured.');
+
+  const ip = req.headers['x-forwarded-for']?.toString().split(',')[0]?.trim() || req.ip;
+  if (!adminLoginOk(ip)) {
+    return res.status(429).render('login', { error: 'Too many attempts. Please try again later.' });
+  }
+
+  const username = normalizeText(req.body && req.body.username);
+  const password = normalizeText(req.body && req.body.password);
+  if (!username || !password || username !== ADMIN_USER || password !== ADMIN_PASS) {
+    return res.status(401).render('login', { error: 'Invalid credentials.' });
+  }
+
+  res.cookie(ADMIN_COOKIE_NAME, '1', {
+    httpOnly: true,
+    signed: true,
+    sameSite: 'lax',
+    secure: isHttpsReq(req),
+    maxAge: ADMIN_COOKIE_MAX_AGE_MS,
+    path: '/'
+  });
+  return res.redirect('/admin');
+});
+
+app.post('/admin/logout', (req, res) => {
+  if (!adminConfigured()) return res.status(500).type('html').send('Admin not configured.');
+  res.clearCookie(ADMIN_COOKIE_NAME, { path: '/' });
+  return res.redirect('/admin/login');
+});
 
 app.post('/api/rsvp', async (req, res) => {
   try {
@@ -128,7 +220,6 @@ app.post('/api/rsvp', async (req, res) => {
 
     const inviterName = normalizeText(body.inviterName);
     const inviterPhone = normalizePhone(body.inviterPhone);
-    const dietNote = normalizeText(body.dietNote);
 
     if (!inviterName) return res.status(400).json({ ok: false, error: 'Name is required.' });
     if (!inviterPhone) return res.status(400).json({ ok: false, error: 'Phone is required.' });
@@ -173,7 +264,6 @@ app.post('/api/rsvp', async (req, res) => {
       inviterPhone,
       partySize: normalizedPartySize,
       guestNames: normalizedGuestNames,
-      dietNote: dietNote || '',
       updatedAt: now,
       deadlineIso: RSVP_DEADLINE_ISO
     };
@@ -211,8 +301,7 @@ app.get('/healthz', (_req, res) => {
 });
 
 // ── ADMIN DASHBOARD ───────────────────────────────────
-app.get('/admin', (req, res) => {
-  if (!requireAdmin(req, res)) return;
+app.get('/admin', requireAdminPage, (req, res) => {
 
   res.status(200).type('html').send(`<!doctype html>
 <html lang="en">
@@ -220,6 +309,7 @@ app.get('/admin', (req, res) => {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>RSVP Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
     <style>
       :root{--bg:#0a0a0a;--card:#111;--gold:#d4af37;--gold2:#f5d742;--muted:#bdbdbd;--danger:#c0392b;}
       *{box-sizing:border-box;}
@@ -250,6 +340,25 @@ app.get('/admin', (req, res) => {
       .muted{color:var(--muted);}
       .small{font-size:12px;line-height:1.4;color:var(--muted);}
       .err{display:none;margin-top:12px;background:#1b0f0f;border:1px solid rgba(192,57,43,0.6);color:#ffb4a9;border-radius:14px;padding:10px;}
+
+      /* Mobile cards */
+      #cards{display:none; margin-top:12px;}
+      .rsvp-card{background:var(--card);border:1px solid rgba(212,175,55,0.2);border-radius:14px;padding:12px;display:grid;gap:10px;}
+      .rsvp-card .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+      .rsvp-card .k{color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;}
+      .rsvp-card .v{font-size:14px;line-height:1.4;}
+      .rsvp-card .actions{display:flex;gap:10px;flex-wrap:wrap;}
+
+      @media(max-width:720px){
+        body{padding:12px;}
+        .top{gap:10px;}
+        .bar{width:100%;}
+        .input{min-width:0;width:100%;}
+        .select{min-width:0;}
+        table{display:none;}
+        #cards{display:grid;gap:10px;}
+        .cards{grid-template-columns:1fr;}
+      }
     </style>
   </head>
   <body>
@@ -285,12 +394,13 @@ app.get('/admin', (req, res) => {
             <th>Status</th>
             <th>Party</th>
             <th>Guests</th>
-            <th>Diet</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
       </table>
+
+      <div id="cards"></div>
     </div>
 
     <script>
@@ -302,6 +412,16 @@ app.get('/admin', (req, res) => {
         const qEl = document.getElementById('q');
         const showDeleted = document.getElementById('showDeleted');
         const tbody = document.getElementById('tbody');
+        const cards = document.getElementById('cards');
+
+        const GOLD = ['#d4af37','#f5d742','#b8860b','#ffffff','#e5c87b','#fffacd'];
+        function canConfetti(){
+          try{ return !window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch{ return true; }
+        }
+        function burst(size){
+          if(!canConfetti() || typeof confetti !== 'function') return;
+          confetti({ particleCount: size, spread: 75, origin: { x: 0.5, y: 0.25 }, colors: GOLD, startVelocity: 28, ticks: 220, gravity: 0.9, scalar: 1.0 });
+        }
 
         function setErr(msg){
           errEl.textContent = msg || '';
@@ -329,7 +449,7 @@ app.get('/admin', (req, res) => {
         function renderRow(r){
           const tr = document.createElement('tr');
           const guests = Array.isArray(r.guestNames) && r.guestNames.length ? r.guestNames.join(', ') : '';
-          const diet = (r.dietNote || '').trim();
+          const diet = '';
           const isDel = r.deleted === true;
           tr.innerHTML = [
             '<td>' + escapeHtml(r.inviterName || '') + (isDel ? ' <span class="muted">(deleted)</span>' : '') + '</td>',
@@ -337,7 +457,6 @@ app.get('/admin', (req, res) => {
             '<td>' + (r.status === 'yes' ? '<span class="pill">yes</span>' : '<span class="pill no">no</span>') + '</td>',
             '<td>' + (r.status === 'yes' ? String(r.partySize || 0) : '-') + '</td>',
             '<td class="small">' + escapeHtml(guests) + '</td>',
-            '<td class="small">' + escapeHtml(diet) + '</td>',
             '<td></td>'
           ].join('');
           const actionTd = tr.lastElementChild;
@@ -367,6 +486,56 @@ app.get('/admin', (req, res) => {
           return tr;
         }
 
+        function renderCard(r){
+          const wrap = document.createElement('div');
+          wrap.className = 'rsvp-card';
+          const guests = Array.isArray(r.guestNames) && r.guestNames.length ? r.guestNames.join(', ') : '';
+          const isDel = r.deleted === true;
+
+          const top = document.createElement('div');
+          top.innerHTML = '<div class="k">Name</div><div class="v">' + escapeHtml(r.inviterName || '') + (isDel ? ' <span class="muted">(deleted)</span>' : '') + '</div>';
+
+          const grid = document.createElement('div');
+          grid.className = 'grid';
+          grid.innerHTML = [
+            '<div><div class="k">Phone</div><div class="v">' + escapeHtml(r.inviterPhone || '') + '</div></div>',
+            '<div><div class="k">Status</div><div class="v">' + (r.status === 'yes' ? '<span class="pill">yes</span>' : '<span class="pill no">no</span>') + '</div></div>',
+            '<div><div class="k">Party</div><div class="v">' + (r.status === 'yes' ? String(r.partySize || 0) : '-') + '</div></div>',
+            '<div><div class="k">Guests</div><div class="v small">' + escapeHtml(guests) + '</div></div>'
+          ].join('');
+
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+          if(isDel){
+            const b = document.createElement('button');
+            b.className = 'btn';
+            b.textContent = 'Restore';
+            b.onclick = async ()=>{
+              if(!confirm('Restore this RSVP?')) return;
+              setErr('');
+              try{ await post('/api/admin/rsvps/' + encodeURIComponent(r.inviterPhone) + '/restore'); burst(80); await loadAll(); }
+              catch(e){ setErr(e.message || 'Restore failed'); }
+            };
+            actions.appendChild(b);
+          } else {
+            const b = document.createElement('button');
+            b.className = 'btn btn-danger';
+            b.textContent = 'Delete';
+            b.onclick = async ()=>{
+              if(!confirm('Delete RSVP for ' + (r.inviterName||'') + ' (' + (r.inviterPhone||'') + ')?')) return;
+              setErr('');
+              try{ await post('/api/admin/rsvps/' + encodeURIComponent(r.inviterPhone) + '/delete'); burst(60); await loadAll(); }
+              catch(e){ setErr(e.message || 'Delete failed'); }
+            };
+            actions.appendChild(b);
+          }
+
+          wrap.appendChild(top);
+          wrap.appendChild(grid);
+          wrap.appendChild(actions);
+          return wrap;
+        }
+
         function escapeHtml(s){
           return String(s).replace(/[&<>\"']/g, (c)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;' }[c]));
         }
@@ -391,8 +560,10 @@ app.get('/admin', (req, res) => {
 
           const data = await api(url.toString());
           tbody.innerHTML = '';
+          cards.innerHTML = '';
           for(const r of data.items){
             tbody.appendChild(renderRow(r));
+            cards.appendChild(renderCard(r));
           }
         }
 
@@ -401,14 +572,15 @@ app.get('/admin', (req, res) => {
           try{
             await loadStats();
             await loadList();
+            if(!window.__didBurst){ window.__didBurst = true; burst(90); }
           } catch(e){
             setErr(e.message || 'Failed to load');
           }
         }
 
         logout.addEventListener('click', ()=>{
-          // Browser-managed; best-effort: reload to re-trigger auth.
-          location.href = '/admin';
+          // Use a POST logout to clear cookie.
+          fetch('/admin/logout', { method: 'POST' }).finally(()=>{ location.href = '/admin/login'; });
         });
         refresh.addEventListener('click', loadAll);
         statusSel.addEventListener('change', loadAll);
@@ -422,8 +594,7 @@ app.get('/admin', (req, res) => {
 </html>`);
 });
 
-app.get('/api/admin/stats', async (req, res) => {
-  if (!requireAdmin(req, res)) return;
+app.get('/api/admin/stats', requireAdminApi, async (req, res) => {
   try {
     const includeDeleted = normalizeText(req.query && req.query.includeDeleted) === '1';
     const baseFilter = includeDeleted ? {} : { deleted: { $ne: true } };
@@ -450,8 +621,7 @@ app.get('/api/admin/stats', async (req, res) => {
   }
 });
 
-app.get('/api/admin/rsvps', async (req, res) => {
-  if (!requireAdmin(req, res)) return;
+app.get('/api/admin/rsvps', requireAdminApi, async (req, res) => {
   try {
     const includeDeleted = normalizeText(req.query && req.query.includeDeleted) === '1';
     const status = normalizeText(req.query && req.query.status) || 'yes';
@@ -470,8 +640,7 @@ app.get('/api/admin/rsvps', async (req, res) => {
       filter.$or = [
         { inviterName: rx },
         { inviterPhone: rx },
-        { guestNames: rx },
-        { dietNote: rx }
+        { guestNames: rx }
       ];
     }
 
@@ -485,7 +654,6 @@ app.get('/api/admin/rsvps', async (req, res) => {
           status: 1,
           partySize: 1,
           guestNames: 1,
-          dietNote: 1,
           deleted: 1
         }
       })
@@ -502,8 +670,7 @@ app.get('/api/admin/rsvps', async (req, res) => {
   }
 });
 
-app.post('/api/admin/rsvps/:inviterPhone/delete', async (req, res) => {
-  if (!requireAdmin(req, res)) return;
+app.post('/api/admin/rsvps/:inviterPhone/delete', requireAdminApi, async (req, res) => {
   try {
     const inviterPhone = normalizePhone(req.params && req.params.inviterPhone);
     if (!inviterPhone) return res.status(400).json({ ok: false, error: 'Missing phone.' });
@@ -523,8 +690,7 @@ app.post('/api/admin/rsvps/:inviterPhone/delete', async (req, res) => {
   }
 });
 
-app.post('/api/admin/rsvps/:inviterPhone/restore', async (req, res) => {
-  if (!requireAdmin(req, res)) return;
+app.post('/api/admin/rsvps/:inviterPhone/restore', requireAdminApi, async (req, res) => {
   try {
     const inviterPhone = normalizePhone(req.params && req.params.inviterPhone);
     if (!inviterPhone) return res.status(400).json({ ok: false, error: 'Missing phone.' });
