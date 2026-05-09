@@ -503,11 +503,11 @@ app.get('/admin', requireAdminPage, (req, res) => {
 
       <table>
         <colgroup>
-          <col style="width: 26%;" />
+          <col style="width: 30%;" />
           <col style="width: 18%;" />
+          <col style="width: 14%;" />
           <col style="width: 12%;" />
-          <col style="width: 10%;" />
-          <col style="width: 24%;" />
+          <col style="width: 16%;" />
           <col style="width: 10%;" />
         </colgroup>
         <thead>
@@ -515,7 +515,7 @@ app.get('/admin', requireAdminPage, (req, res) => {
             <th>Name</th>
             <th>Phone</th>
             <th>Status</th>
-            <th>Party</th>
+            <th>Persons</th>
             <th>Guests</th>
             <th>Actions</th>
           </tr>
@@ -625,8 +625,10 @@ app.get('/admin', requireAdminPage, (req, res) => {
           const frag = document.createDocumentFragment();
           const rowId = String(r.inviterPhone || '');
           const guestsArr = Array.isArray(r.guestNames) ? r.guestNames.filter(Boolean) : [];
-          const guestsShort = guestsArr.length ? guestsArr.join(', ') : '';
+          const guestsCount = guestsArr.length;
           const isDel = r.deleted === true;
+          const isComing = r.status === 'yes';
+          const persons = isComing ? (Number(r.partySize) || 0) : 0;
 
           const tr = document.createElement('tr');
           tr.className = 'row-click';
@@ -634,9 +636,9 @@ app.get('/admin', requireAdminPage, (req, res) => {
           tr.innerHTML = [
             '<td class="td-clip"><span class="exp" aria-hidden="true">▸</span><strong>' + escapeHtml(r.inviterName || '') + '</strong>' + (isDel ? ' <span class="muted">(deleted)</span>' : '') + '</td>',
             '<td class="td-clip mono"><button class="link mono" type="button" data-phone="' + escapeHtml(rowId) + '">' + escapeHtml(rowId) + '</button></td>',
-            '<td>' + (r.status === 'yes' ? '<span class="pill">yes</span>' : '<span class="pill no">no</span>') + '</td>',
-            '<td>' + (r.status === 'yes' ? String(r.partySize || 0) : '-') + '</td>',
-            '<td class="td-clip small">' + escapeHtml(guestsShort) + '</td>',
+            '<td>' + (isComing ? '<span class="pill">Coming</span>' : '<span class="pill no">Declined</span>') + '</td>',
+            '<td>' + String(persons) + '</td>',
+            '<td class="small">' + (isComing ? (guestsCount ? (String(guestsCount) + ' guest' + (guestsCount === 1 ? '' : 's')) : '<span class="muted">Alone</span>') : '<span class="muted">-</span>') + '</td>',
             '<td></td>'
           ].join('');
 
@@ -653,8 +655,8 @@ app.get('/admin', requireAdminPage, (req, res) => {
             +   '<div class="details-grid">'
             +     '<div class="details-line"><div class="k">Name</div><div class="v">' + escapeHtml(r.inviterName || '') + '</div></div>'
             +     '<div class="details-line"><div class="k">Phone</div><div class="v mono">' + escapeHtml(rowId) + '</div></div>'
-            +     '<div class="details-line"><div class="k">Status</div><div class="v">' + (r.status === 'yes' ? 'Coming' : 'Declined') + '</div></div>'
-            +     '<div class="details-line"><div class="k">Party</div><div class="v">' + (r.status === 'yes' ? String(r.partySize || 0) : '-') + '</div></div>'
+            +     '<div class="details-line"><div class="k">Status</div><div class="v">' + (isComing ? 'Coming' : 'Declined') + '</div></div>'
+            +     '<div class="details-line"><div class="k">Persons</div><div class="v">' + String(persons) + '</div></div>'
             +   '</div>'
             +   '<div style="margin-top:10px;" class="details-line"><div class="k">Guests</div><div class="v">' + guestsChips + '</div></div>'
             +   '<div class="actions-inline" data-actions="1"></div>'
