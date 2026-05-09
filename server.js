@@ -391,9 +391,32 @@ app.get('/admin', requireAdminPage, (req, res) => {
       table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;margin-top:12px;background:rgba(17,17,17,0.92);border:1px solid rgba(212,175,55,0.18);border-radius:16px;overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,0.45);}
       thead th{position:sticky;top:64px;z-index:5;}
       th,td{padding:11px 10px;border-bottom:1px solid rgba(255,255,255,0.06);vertical-align:top;text-align:left;font-size:13px;}
-      th{color:var(--gold);font-size:12px;letter-spacing:1px;text-transform:uppercase;background:var(--card2);}
+      th{color:var(--gold);font-size:12px;letter-spacing:1px;text-transform:uppercase;background:var(--card2);box-shadow:0 1px 0 rgba(255,255,255,0.05) inset;}
       tbody tr:nth-child(2n) td{background:rgba(255,255,255,0.012);}
       tr:hover td{background:rgba(255,255,255,0.03);}
+
+      /* Table polish */
+      thead th:first-child{border-top-left-radius:16px;}
+      thead th:last-child{border-top-right-radius:16px;}
+      tbody tr:last-child td{border-bottom:none;}
+      td:last-child{text-align:right;}
+      th:last-child{text-align:right;}
+
+      .exp{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        width:18px;
+        height:18px;
+        margin-right:8px;
+        border-radius:6px;
+        border:1px solid rgba(212,175,55,0.18);
+        background:rgba(0,0,0,0.35);
+        color:rgba(245,215,66,0.95);
+        font-weight:950;
+        flex:0 0 auto;
+      }
+      tr.is-open td{background:rgba(245,215,66,0.035) !important;}
 
       .td-clip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
       .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:0.2px;}
@@ -409,6 +432,9 @@ app.get('/admin', requireAdminPage, (req, res) => {
       .chiplist{display:flex;flex-wrap:wrap;gap:8px;}
       .namechip{display:inline-flex;align-items:center;border:1px solid rgba(212,175,55,0.18);background:rgba(0,0,0,0.35);border-radius:999px;padding:6px 10px;font-weight:850;color:#fff;}
       .actions-inline{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+
+      /* Make row action buttons smaller in table */
+      td .btn{padding:8px 10px;border-radius:10px;}
 
       .pill{display:inline-block;padding:3px 9px;border-radius:999px;border:1px solid rgba(212,175,55,0.32);color:var(--gold2);font-weight:900;font-size:12px;}
       .pill.no{border-color:rgba(192,57,43,0.5);color:#ffb4a9;}
@@ -606,7 +632,7 @@ app.get('/admin', requireAdminPage, (req, res) => {
           tr.className = 'row-click';
           tr.dataset.rowid = rowId;
           tr.innerHTML = [
-            '<td class="td-clip"><strong>' + escapeHtml(r.inviterName || '') + '</strong>' + (isDel ? ' <span class="muted">(deleted)</span>' : '') + '</td>',
+            '<td class="td-clip"><span class="exp" aria-hidden="true">▸</span><strong>' + escapeHtml(r.inviterName || '') + '</strong>' + (isDel ? ' <span class="muted">(deleted)</span>' : '') + '</td>',
             '<td class="td-clip mono"><button class="link mono" type="button" data-phone="' + escapeHtml(rowId) + '">' + escapeHtml(rowId) + '</button></td>',
             '<td>' + (r.status === 'yes' ? '<span class="pill">yes</span>' : '<span class="pill no">no</span>') + '</td>',
             '<td>' + (r.status === 'yes' ? String(r.partySize || 0) : '-') + '</td>',
@@ -674,6 +700,9 @@ app.get('/admin', requireAdminPage, (req, res) => {
           tr.onclick = ()=>{
             const open = details.style.display !== 'none';
             details.style.display = open ? 'none' : '';
+            tr.classList.toggle('is-open', !open);
+            const exp = tr.querySelector('.exp');
+            if(exp) exp.textContent = open ? '▸' : '▾';
           };
 
           frag.appendChild(tr);

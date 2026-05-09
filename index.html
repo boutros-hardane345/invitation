@@ -192,13 +192,11 @@
     .logo-item img{
       width:100%;max-width:100px;height:100px;
       filter:drop-shadow(0 0 4px rgba(241,196,48,1));
-      border-radius:50px;cursor:pointer;
-      transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1),filter 0.3s;
+      border-radius:50px;
+      cursor:default;
+      transition:filter 0.2s;
     }
-    .logo-item img:hover{
-      transform:scale(1.2) rotate(-6deg);
-      filter:drop-shadow(0 0 18px rgba(241,196,48,1)) brightness(1.2);
-    }
+    .logo-item img:hover{filter:drop-shadow(0 0 8px rgba(241,196,48,1));}
 
     /* ── COUNTDOWN ── */
     .countdown-card{
@@ -563,7 +561,7 @@
 
         <div class="rsvp-row">
           <div class="rsvp-radio-group">
-            <label class="rsvp-radio"><input type="radio" name="status" value="yes"> Coming</label>
+            <label class="rsvp-radio"><input type="radio" name="status" value="yes" checked> Coming</label>
             <label class="rsvp-radio"><input type="radio" name="status" value="no"> Not coming</label>
           </div>
         </div>
@@ -610,10 +608,10 @@
     <!-- Logos -->
     <div class="logos-row scroll-reveal">
       <div class="logo-item">
-        <img src="kamesh.jpg" alt="Kammesh" onclick="logoParty(this)">
+        <img src="kamesh.jpg" alt="Kammesh">
       </div>
       <div class="logo-item">
-        <img src="collectorbar.jpg" alt="The Collector Bar" onclick="logoParty(this)">
+        <img src="collectorbar.jpg" alt="The Collector Bar">
       </div>
     </div>
   </div>
