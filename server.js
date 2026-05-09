@@ -389,7 +389,8 @@ app.get('/admin', requireAdminPage, (req, res) => {
       .toggle{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px;}
 
       table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;margin-top:12px;background:rgba(17,17,17,0.92);border:1px solid rgba(212,175,55,0.18);border-radius:16px;overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,0.45);}
-      thead th{position:sticky;top:64px;z-index:5;}
+      /* Sticky header removed: it was visually confusing with the sticky top bar */
+      thead th{position:static;}
       th,td{padding:11px 10px;border-bottom:1px solid rgba(255,255,255,0.06);vertical-align:top;text-align:left;font-size:13px;}
       th{color:var(--gold);font-size:12px;letter-spacing:1px;text-transform:uppercase;background:var(--card2);box-shadow:0 1px 0 rgba(255,255,255,0.05) inset;}
       tbody tr:nth-child(2n) td{background:rgba(255,255,255,0.012);}
@@ -462,7 +463,6 @@ app.get('/admin', requireAdminPage, (req, res) => {
 
       @media(max-width:720px){
         body{padding:12px;}
-        thead th{top:112px;}
         .bar{width:100%;}
         .input{min-width:0;width:100%;}
         .select{min-width:0;}
