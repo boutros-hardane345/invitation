@@ -259,7 +259,7 @@
 
     .hero .friends-style {
       font-family: 'Permanent Marker', cursive;
-      font-size: 1.8rem;
+      font-size: 1.25rem;
       letter-spacing: 2px;
       color: #fff;
       display: inline-block;
@@ -270,15 +270,49 @@
       animation: none;
     }
 
+    /* Friends-like colored separators */
+    .hero .f-dot {
+      display: inline-block;
+      width: 0.62em;
+      height: 0.62em;
+      border-radius: 999px;
+      margin: 0 0.45rem;
+      transform: translateY(0.06em);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10);
+    }
+
+    .hero .f-dash {
+      display: inline-block;
+      margin: 0 0.45rem;
+      font-weight: 900;
+      transform: translateY(-0.06em);
+    }
+
+    .hero .f-red {
+      background: #e94b3c;
+      color: #e94b3c;
+    }
+
+    .hero .f-yellow {
+      background: #f2c94c;
+      color: #f2c94c;
+    }
+
+    .hero .f-blue {
+      background: #2f80ed;
+      color: #2f80ed;
+    }
+
     .hero .friends-style-small {
       font-family: 'Permanent Marker', cursive;
-      font-size: 1.4rem;
+      font-size: 2.15rem;
       letter-spacing: 2px;
       color: #fff;
       white-space: nowrap;
       border-right: none;
       width: auto;
       animation: none;
+      line-height: 1.15;
     }
 
     /* (typewriter + cursor blink removed) */
@@ -970,11 +1004,13 @@
       }
 
       .hero .friends-style {
-        font-size: 1.3rem;
+        font-size: 1.05rem;
       }
 
       .hero .friends-style-small {
-        font-size: 1.1rem;
+        font-size: 1.55rem;
+        white-space: normal;
+        text-align: center;
       }
 
       .live-timer {
@@ -1051,8 +1087,19 @@
         <img src="photo.jpg" alt="Photo" class="hero-photo" id="heroPhoto" title="Tap me">
       </div>
       <div class="hero-text">
-        <div class="friends-style">SEASON : 20 - EPISODE : 26</div>
-        <div class="friends-style-small">THE • ONE • WHERE • HE • GRADUATE</div>
+        <div class="friends-style">
+          SEASON : 20
+          <span class="f-dot f-yellow" aria-hidden="true"></span>
+          EPISODE : 26
+        </div>
+        <div class="friends-style-small">
+          THE <span class="f-dot f-blue" aria-hidden="true"></span>
+          ONE <span class="f-dot f-red" aria-hidden="true"></span>
+          WHERE <span class="f-dot f-yellow" aria-hidden="true"></span>
+          HE
+          <br>
+          GRADUATE
+        </div>
       </div>
     </div>
 
@@ -1073,21 +1120,10 @@
       <!-- Event details -->
       <div class="info-card info-card--photoshoot scroll-reveal">
         <h2>Photoshoot in Ehmej</h2>
-        <div class="info-line">Thursday, 18 June 2026</div>
-        <div class="info-line">10:00 AM – 12:30 PM</div>
+        <div class="info-line">Friday, 26 June 2026</div>
+        <div class="info-line">5:00 PM – 7:00 PM</div>
         <div class="info-line">Ehmej</div>
         <div class="info-line"><span class="dresscode">Dress code: Smart casual</span> – elegant & comfortable</div>
-      </div>
-
-      <!-- Drinks & Appetizers -->
-      <div class="info-card scroll-reveal">
-        <h2>Drinks & Appetizers</h2>
-        <p style="line-height:2.2;">
-          Drinks courtesy of <strong style="color:var(--gold);">The Collector Bar</strong><br>
-          Appetizers by <strong style="color:var(--gold);">Kammesh</strong><br>
-          Homemade sweets & savory bites<br><br>
-          Celebrate with fine flavours and warm company.
-        </p>
       </div>
 
       <!-- RSVP -->
@@ -1137,9 +1173,9 @@
 
         <div id="rsvpMessage" class="success-message"></div>
         <div id="rsvpError" class="error-message"></div>
-        <div id="deadlineMessage" class="deadline-warning is-hidden">RSVP is closed. The deadline (15 June 2026) has
+        <div id="deadlineMessage" class="deadline-warning is-hidden">RSVP is closed. The deadline (23 June 2026) has
           passed.</div>
-        <div class="deadline-note">Deadline to RSVP: <strong>15 June 2026</strong>.</div>
+        <div class="deadline-note">Deadline to RSVP: <strong>23 June 2026</strong>.</div>
       </div>
 
       <hr>
@@ -1149,27 +1185,18 @@
         See you in Ehmej.
       </div>
 
-      <!-- Logos -->
-      <div class="logos-row scroll-reveal">
-        <div class="logo-item">
-          <img src="kamesh.jpg" alt="Kammesh" onclick="logoParty(this)">
-        </div>
-        <div class="logo-item">
-          <img src="collectorbar.jpg" alt="The Collector Bar" onclick="logoParty(this)">
-        </div>
-      </div>
     </div>
 
     <footer>
-      Ehmej • 18 June 2026 • 10:00 – 12:30 •
+      Ehmej • 26 June 2026 • 5:00 – 7:00 •
       <a href="/admin/login" target="_blank" rel="noopener noreferrer" class="footer-admin">Boutros Hardane</a>
     </footer>
   </div>
 
   <script>
-    const RSVP_DEADLINE_ISO = "2026-06-15T23:59:59+03:00";
+    const RSVP_DEADLINE_ISO = "2026-06-23T23:59:59+03:00";
     const RSVP_DEADLINE = new Date(RSVP_DEADLINE_ISO);
-    const EVENT_DATE = new Date(2026, 5, 18, 10, 0, 0);
+    const EVENT_DATE = new Date(2026, 5, 26, 17, 0, 0);
     const GOLD = ['#d4af37', '#f5d742', '#b8860b', '#ffffff', '#e5c87b', '#fffacd'];
 
     // Confetti clipped to the invitation card
@@ -1498,7 +1525,7 @@
           }
 
           if (status === 'yes') {
-            showSuccess('✓ RSVP saved. See you on 18 June in Ehmej!');
+            showSuccess('✓ RSVP saved. See you on 26 June in Ehmej!');
             joinBtn.classList.remove('is-hidden');
             fireCardConfetti({ particleCount: 200, spread: 130, origin: { x: 0.5, y: 0.7 }, startVelocity: 45, ticks: 400 });
             setTimeout(() => fireCardConfetti({ particleCount: 100, spread: 360, origin: { x: 0.5, y: 0.5 }, startVelocity: 20, gravity: 0.3, ticks: 500 }), 400);
